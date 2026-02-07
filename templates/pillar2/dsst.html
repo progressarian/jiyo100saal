@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}DSST - Symbol Substitution Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold" style="color: #7c3aed;">Test 1 of 4: DSST - Digital Symbol Substitution</span>
+        <span class="text-muted">Processing Speed • 3 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 25%; background-color: #7c3aed;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar2.dsst', assessment_id=assessment.id) }}">
+    
+    <!-- Protocol Info -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-clipboard-check"></i> Test Protocol</h5>
+        <ul class="mb-0">
+            <li>Present the DSST coding sheet with symbol-digit key at top</li>
+            <li>Patient matches symbols to numbers using the key</li>
+            <li>Patient has <strong>90 seconds</strong> to complete as many as possible</li>
+            <li>Score = number of correct substitutions</li>
+            <li>Do not count errors (skipped items are not counted as errors)</li>
+            <li>Provide a practice row first to ensure understanding</li>
+        </ul>
+    </div>
+    
+    <!-- Instructions Display -->
+    <div class="form-section" style="background-color: #f3e8ff; border-left: 4px solid #7c3aed;">
+        <h5 style="color: #7c3aed;"><i class="bi bi-info-circle-fill"></i> Instructions to Patient</h5>
+        <p class="mb-0 fst-italic">
+            "Look at the key at the top of the page. Each symbol has a number. 
+            In each box below, write the number that goes with each symbol. 
+            Work as quickly as you can without making mistakes. 
+            Begin here and go in order without skipping any. 
+            Ready? Begin."
+        </p>
+    </div>
+    
+    <!-- Input -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-pencil-square"></i> Test Result</h5>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <label for="dsst_score" class="form-label required-field">Number Correct in 90 Seconds</label>
+                <input type="number" class="form-control form-control-lg text-center" id="dsst_score" name="dsst_score"
+                       value="{{ pillar2.dsst_score if pillar2 and pillar2.dsst_score is not none else '' }}"
+                       min="0" max="133" required style="font-size: 2rem; font-weight: bold;">
+                <div class="form-text text-center">Enter the total number of correct substitutions</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reference Ranges -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-graph-up"></i> Clinical Thresholds ({{ patient.sex|capitalize }}, Age {{ assessment.age_at_assessment }})</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #d4edda; color: #155724;">
+                    <strong>Excellent</strong><br>3.0 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #d1ecf1; color: #0c5460;">
+                    <strong>Good</strong><br>2.6 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #fff3cd; color: #856404;">
+                    <strong>Fair</strong><br>2.2 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #f8d7da; color: #721c24;">
+                    <strong>Poor</strong><br>≤1.0 pts
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 text-muted small">
+            <strong>Age-Adjusted Norms (90 seconds):</strong><br>
+            {% if assessment.age_at_assessment < 40 %}
+            Age {{ assessment.age_at_assessment }}: Excellent ≥65, Good 55-64, Fair 45-54, Below Avg 35-44, Poor &lt;35
+            {% elif assessment.age_at_assessment < 60 %}
+            Age {{ assessment.age_at_assessment }}: Excellent ≥52, Good 43-51, Fair 35-42, Below Avg 28-34, Poor &lt;28
+            {% elif assessment.age_at_assessment < 70 %}
+            Age {{ assessment.age_at_assessment }}: Excellent ≥46, Good 38-45, Fair 30-37, Below Avg 23-29, Poor &lt;23
+            {% elif assessment.age_at_assessment < 80 %}
+            Age {{ assessment.age_at_assessment }}: Excellent ≥38, Good 30-37, Fair 23-29, Below Avg 17-22, Poor &lt;17
+            {% else %}
+            Age {{ assessment.age_at_assessment }}: Excellent ≥32, Good 24-31, Fair 18-23, Below Avg 13-17, Poor &lt;13
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if pillar2 and pillar2.dsst_points is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-success">{{ pillar2.dsst_score }} correct</span>
+            </div>
+            <div class="col-md-4">
+                <span class="display-6 fw-bold" style="color: #7c3aed;">{{ pillar2.dsst_points }}/3.0 pts</span>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-success fs-6">{{ pillar2.dsst_category }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-check-lg"></i> Save & Continue
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

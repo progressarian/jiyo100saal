@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Word Recall Memory Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Header -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Test Info Card -->
+<div class="card mb-4" style="border-left: 4px solid #7c3aed;">
+    <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-brain" style="color: #7c3aed;"></i> Word Recall Memory Test</h5>
+        <p class="card-text mb-0 text-muted">
+            <strong>Instructions:</strong> Read the 10 words to the patient (1 word per second). 
+            After reading all words, ask the patient to recall as many as possible (immediate recall).
+            Continue with other tests for 5-10 minutes, then ask for delayed recall.
+        </p>
+        <div class="mt-2">
+            <span class="badge bg-secondary me-1">4 Points Max</span>
+            <span class="badge" style="background-color: #f3e8ff; color: #7c3aed;">Immediate: 2pts</span>
+            <span class="badge" style="background-color: #f3e8ff; color: #7c3aed;">Delayed: 2pts</span>
+        </div>
+    </div>
+</div>
+
+<!-- Word List Reference (For Clinician) -->
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <i class="bi bi-eye"></i> <strong>CLINICIAN ONLY - Word List</strong>
+        <small>(Do not show to patient)</small>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for word in word_list %}
+            <div class="col-auto mb-2">
+                <span class="badge bg-dark fs-6 p-2">{{ loop.index }}. {{ word }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Phase Selection -->
+<div class="card mb-4">
+    <div class="card-header" style="background-color: #f3e8ff;">
+        <ul class="nav nav-pills card-header-pills" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {% if not pillar2 or pillar2.memory_immediate_count is none %}active{% endif %}" 
+                   id="immediate-tab" data-bs-toggle="pill" href="#immediate-form" role="tab" 
+                   style="{% if not pillar2 or pillar2.memory_immediate_count is none %}background-color: #7c3aed;{% endif %}">
+                    <i class="bi bi-1-circle"></i> Immediate Recall
+                    {% if pillar2 and pillar2.memory_immediate_count is not none %}
+                    <span class="badge bg-success">✓</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if pillar2 and pillar2.memory_immediate_count is not none and pillar2.memory_delayed_count is none %}active{% endif %}" 
+                   id="delayed-tab" data-bs-toggle="pill" href="#delayed-form" role="tab"
+                   style="{% if pillar2 and pillar2.memory_immediate_count is not none and pillar2.memory_delayed_count is none %}background-color: #7c3aed;{% endif %}">
+                    <i class="bi bi-2-circle"></i> Delayed Recall (after 5-10 min)
+                    {% if pillar2 and pillar2.memory_delayed_count is not none %}
+                    <span class="badge bg-success">✓</span>
+                    {% endif %}
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        
+        <!-- Immediate Recall Form -->
+        <div class="tab-pane fade {% if not pillar2 or pillar2.memory_immediate_count is none %}show active{% endif %}" id="immediate-form" role="tabpanel">
+            <h5 class="mb-3"><i class="bi bi-clock-history"></i> Immediate Recall</h5>
+            <p class="text-muted">Check each word the patient correctly recalled immediately after presentation:</p>
+            
+            <form method="post">
+                <input type="hidden" name="test_phase" value="immediate">
+                
+                <div class="row g-3">
+                    {% for word in word_list %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check p-3 border rounded {% if pillar2 and pillar2['memory_immediate_word' ~ loop.index] %}bg-success-subtle{% endif %}">
+                            <input class="form-check-input" type="checkbox" name="word{{ loop.index }}" id="imm_word{{ loop.index }}"
+                                   {% if pillar2 and pillar2['memory_immediate_word' ~ loop.index] %}checked{% endif %}>
+                            <label class="form-check-label fs-5" for="imm_word{{ loop.index }}">
+                                {{ loop.index }}. {{ word }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if pillar2 and pillar2.memory_immediate_count is not none %}
+                <div class="alert alert-info mt-3">
+                    <strong>Previous Result:</strong> {{ pillar2.memory_immediate_count }}/10 words, 
+                    {{ pillar2.memory_immediate_points }} points ({{ pillar2.memory_immediate_category }})
+                </div>
+                {% endif %}
+                
+                <div class="sticky-save-bar">
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                            <i class="bi bi-check-lg"></i> Save Immediate Recall
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Delayed Recall Form -->
+        <div class="tab-pane fade {% if pillar2 and pillar2.memory_immediate_count is not none and pillar2.memory_delayed_count is none %}show active{% endif %}" id="delayed-form" role="tabpanel">
+            <h5 class="mb-3"><i class="bi bi-hourglass-split"></i> Delayed Recall (5-10 minutes later)</h5>
+            
+            {% if not pillar2 or pillar2.memory_immediate_count is none %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Complete <strong>Immediate Recall</strong> first, then wait 5-10 minutes before testing delayed recall.
+            </div>
+            {% else %}
+            <p class="text-muted">Without re-reading the words, ask the patient to recall as many as possible:</p>
+            
+            <form method="post">
+                <input type="hidden" name="test_phase" value="delayed">
+                
+                <div class="row g-3">
+                    {% for word in word_list %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check p-3 border rounded {% if pillar2 and pillar2['memory_delayed_word' ~ loop.index] %}bg-success-subtle{% endif %}">
+                            <input class="form-check-input" type="checkbox" name="word{{ loop.index }}" id="del_word{{ loop.index }}"
+                                   {% if pillar2 and pillar2['memory_delayed_word' ~ loop.index] %}checked{% endif %}>
+                            <label class="form-check-label fs-5" for="del_word{{ loop.index }}">
+                                {{ loop.index }}. {{ word }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if pillar2 and pillar2.memory_delayed_count is not none %}
+                <div class="alert mt-3 {% if pillar2.memory_retention_flag %}alert-danger{% else %}alert-info{% endif %}">
+                    <strong>Previous Result:</strong> {{ pillar2.memory_delayed_count }}/10 words,
+                    {{ pillar2.memory_delayed_points }} points ({{ pillar2.memory_delayed_category }})
+                    <br>
+                    <strong>Retention:</strong> {{ pillar2.memory_retention_pct }}% 
+                    {% if pillar2.memory_retention_flag %}
+                    <span class="badge bg-danger">⚠️ LOW - Hippocampal Concern</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="sticky-save-bar">
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                            <i class="bi bi-check-lg"></i> Save Delayed Recall & Continue
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Scoring Reference -->
+<div class="card mt-4 mb-5" style="border-color: #7c3aed;">
+    <div class="card-header" style="background-color: #f3e8ff;">
+        <h6 class="mb-0" style="color: #7c3aed;"><i class="bi bi-info-circle"></i> Scoring Reference (Age {{ assessment.age_at_assessment }})</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Immediate Recall (2 pts max)</h6>
+                <table class="table table-sm">
+                    <tr><td>9-10 words</td><td>2.0 pts - Excellent</td></tr>
+                    <tr><td>7-8 words</td><td>1.5 pts - Good</td></tr>
+                    <tr><td>5-6 words</td><td>1.0 pts - Fair</td></tr>
+                    <tr><td>3-4 words</td><td>0.5 pts - Poor</td></tr>
+                    <tr><td>0-2 words</td><td>0.0 pts - Very Poor</td></tr>
+                </table>
+                <small class="text-muted">*Thresholds adjusted for age 60+ and 80+</small>
+            </div>
+            <div class="col-md-6">
+                <h6>Retention Rate</h6>
+                <table class="table table-sm">
+                    <tr><td>≥80%</td><td>Normal retention</td></tr>
+                    <tr><td>50-79%</td><td>Mild difficulty</td></tr>
+                    <tr><td>&lt;50%</td><td class="text-danger fw-bold">⚠️ Hippocampal concern</td></tr>
+                </table>
+                <small class="text-muted">Retention = Delayed ÷ Immediate × 100%</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check:hover { background-color: #f3e8ff; }
+.form-check-input:checked { background-color: #7c3aed; border-color: #7c3aed; }
+</style>
+{% endblock %}

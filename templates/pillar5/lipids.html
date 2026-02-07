@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Standard Lipid Panel - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-heart-pulse"></i> Standard Lipid Panel (4 points)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Input Mode Toggle -->
+                <div class="mb-4">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-success" id="btn-exact" onclick="switchMode('exact')">
+                            Exact Lab Values
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="btn-category" onclick="switchMode('category')">
+                            Category Selection
+                        </button>
+                    </div>
+                    <input type="hidden" name="input_mode" id="input_mode" value="{{ pillar5.lipids_input_mode if pillar5.lipids_input_mode else 'exact' }}">
+                </div>
+
+                <!-- Exact Mode -->
+                <div id="exact-mode" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>LDL Cholesterol</strong></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" class="form-control" id="ldl" name="ldl_cholesterol" 
+                                       value="{{ pillar5.ldl_cholesterol if pillar5.ldl_cholesterol else '' }}"
+                                       oninput="calculateTotals()">
+                                <span class="input-group-text">mg/dL</span>
+                            </div>
+                            <small class="text-muted">Optimal: &lt;70 | Good: 70-100 | High: &gt;130</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>HDL Cholesterol</strong></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" class="form-control" id="hdl" name="hdl_cholesterol" 
+                                       value="{{ pillar5.hdl_cholesterol if pillar5.hdl_cholesterol else '' }}"
+                                       oninput="calculateTotals()">
+                                <span class="input-group-text">mg/dL</span>
+                            </div>
+                            <small class="text-muted">{% if patient.sex == 'male' %}Male optimal: ≥60{% else %}Female optimal: ≥70{% endif %}</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>Triglycerides</strong></label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" class="form-control" id="tg" name="triglycerides" 
+                                       value="{{ pillar5.triglycerides if pillar5.triglycerides else '' }}"
+                                       oninput="calculateTotals()">
+                                <span class="input-group-text">mg/dL</span>
+                            </div>
+                            <small class="text-muted">Optimal: &lt;100 | Good: 100-150 | High: &gt;200</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>Total Cholesterol (calculated)</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="total-chol" readonly>
+                                <span class="input-group-text">mg/dL</span>
+                            </div>
+                            <small class="text-muted">Auto-calculated: LDL + HDL + (TG/5)</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>Total/HDL Ratio (calculated)</strong></label>
+                            <input type="text" class="form-control" id="ratio" readonly>
+                            <small class="text-muted">Optimal: &lt;3.0 | Good: 3-4 | High Risk: &gt;5</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Mode -->
+                <div id="category-mode" style="display: none;">
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Select Lipid Profile Category</strong></label>
+                        <select class="form-select" name="lipids_category">
+                            <option value="">Select category...</option>
+                            <option value="optimal" {% if pillar5.lipids_category_input == 'optimal' %}selected{% endif %}>
+                                Optimal (LDL&lt;70, HDL≥60/70, TG&lt;100)
+                            </option>
+                            <option value="good" {% if pillar5.lipids_category_input == 'good' %}selected{% endif %}>
+                                Good (LDL 70-100, HDL 50-60, TG 100-150)
+                            </option>
+                            <option value="acceptable" {% if pillar5.lipids_category_input == 'acceptable' %}selected{% endif %}>
+                                Acceptable (LDL 100-130, HDL 40-50, TG 150-200)
+                            </option>
+                            <option value="borderline" {% if pillar5.lipids_category_input == 'borderline' %}selected{% endif %}>
+                                Borderline High (LDL 130-160, HDL&lt;40, TG 200-500)
+                            </option>
+                            <option value="high" {% if pillar5.lipids_category_input == 'high' %}selected{% endif %}>
+                                High Risk (LDL&gt;160, HDL&lt;40, TG&gt;500)
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mode switching
+function switchMode(mode) {
+    document.getElementById('input_mode').value = mode;
+    
+    if (mode === 'exact') {
+        document.getElementById('exact-mode').style.display = 'block';
+        document.getElementById('category-mode').style.display = 'none';
+        document.getElementById('btn-exact').classList.add('active');
+        document.getElementById('btn-category').classList.remove('active');
+    } else {
+        document.getElementById('exact-mode').style.display = 'none';
+        document.getElementById('category-mode').style.display = 'block';
+        document.getElementById('btn-exact').classList.remove('active');
+        document.getElementById('btn-category').classList.add('active');
+    }
+}
+
+// Calculate totals
+function calculateTotals() {
+    const ldl = parseFloat(document.getElementById('ldl').value) || 0;
+    const hdl = parseFloat(document.getElementById('hdl').value) || 0;
+    const tg = parseFloat(document.getElementById('tg').value) || 0;
+    
+    if (ldl && hdl && tg) {
+        const total = ldl + hdl + (tg / 5);
+        document.getElementById('total-chol').value = total.toFixed(1);
+        
+        if (hdl > 0) {
+            const ratio = total / hdl;
+            document.getElementById('ratio').value = ratio.toFixed(2);
+        }
+    }
+}
+
+// Initialize on load
+window.onload = function() {
+    const currentMode = document.getElementById('input_mode').value || 'exact';
+    switchMode(currentMode);
+    calculateTotals();
+};
+</script>
+{% endblock %}

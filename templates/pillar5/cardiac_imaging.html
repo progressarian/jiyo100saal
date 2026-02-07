@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Cardiac Imaging - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-heart"></i> Cardiac Imaging (3 points)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- CAC Score -->
+                <div class="mb-4">
+                    <h5>1. Coronary Artery Calcium (CAC) Score (1 pt)</h5>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-radio" type="radio" name="cac_score_input" id="cac-perform" value="perform" onchange="toggleCACInput()" 
+                                   {% if pillar5.cac_score %}checked{% endif %}>
+                            <label class="form-check-label" for="cac-perform">
+                                CAC scan performed - enter score
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-radio" type="radio" name="cac_score_input" id="cac-not" value="notPerformed" onchange="toggleCACInput()"
+                                   {% if not pillar5.cac_score %}checked{% endif %}>
+                            <label class="form-check-label" for="cac-not">
+                                Not performed
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="cac-input-field" style="display: {% if pillar5.cac_score %}block{% else %}none{% endif %};">
+                        <label class="form-label">Agatston Score</label>
+                        <input type="number" step="0.1" class="form-control" name="cac_score" 
+                               value="{{ pillar5.cac_score if pillar5.cac_score else '' }}" 
+                               placeholder="Enter CAC score">
+                        <small class="text-muted">0=Optimal | 1-10=Minimal | 10-100=Mild | 100-400=Moderate | &gt;400=Extensive</small>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- TMT -->
+                <div class="mb-4">
+                    <h5>2. Treadmill Test (TMT) (1 pt)</h5>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="tmt_performed" name="tmt_performed"
+                               {% if pillar5.tmt_performed %}checked{% endif %}
+                               onchange="toggleTMTResult()">
+                        <label class="form-check-label" for="tmt_performed">
+                            <strong>TMT Performed</strong>
+                        </label>
+                    </div>
+                    
+                    <div id="tmt-result-field" style="display: {% if pillar5.tmt_performed %}block{% else %}none{% endif %};">
+                        <label class="form-label">TMT Result</label>
+                        <select class="form-select" name="tmt_result">
+                            <option value="">Select result...</option>
+                            <option value="negative" {% if pillar5.tmt_result == 'negative' %}selected{% endif %}>Negative (Normal)</option>
+                            <option value="positive" {% if pillar5.tmt_result == 'positive' %}selected{% endif %}>Positive (Further workup needed)</option>
+                            <option value="abnormal" {% if pillar5.tmt_result == 'abnormal' %}selected{% endif %}>Abnormal (Significant findings)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Echo/CT -->
+                <div class="mb-4">
+                    <h5>3. Echocardiogram / Cardiac CT (1 pt)</h5>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="echo_ct_performed" name="echo_ct_performed"
+                               {% if pillar5.echo_ct_performed %}checked{% endif %}
+                               onchange="toggleEchoResult()">
+                        <label class="form-check-label" for="echo_ct_performed">
+                            <strong>Echo/CT Performed</strong>
+                        </label>
+                    </div>
+                    
+                    <div id="echo-result-field" style="display: {% if pillar5.echo_ct_performed %}block{% else %}none{% endif %};">
+                        <label class="form-label">Result</label>
+                        <select class="form-select" name="echo_ct_result">
+                            <option value="">Select result...</option>
+                            <option value="normal" {% if pillar5.echo_ct_result == 'normal' %}selected{% endif %}>Normal</option>
+                            <option value="mild" {% if pillar5.echo_ct_result == 'mild' %}selected{% endif %}>Mild abnormality</option>
+                            <option value="moderate" {% if pillar5.echo_ct_result == 'moderate' %}selected{% endif %}>Moderate abnormality</option>
+                            <option value="severe" {% if pillar5.echo_ct_result == 'severe' %}selected{% endif %}>Severe abnormality</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCACInput() {
+    const perform = document.getElementById('cac-perform').checked;
+    document.getElementById('cac-input-field').style.display = perform ? 'block' : 'none';
+}
+
+function toggleTMTResult() {
+    const performed = document.getElementById('tmt_performed').checked;
+    document.getElementById('tmt-result-field').style.display = performed ? 'block' : 'none';
+}
+
+function toggleEchoResult() {
+    const performed = document.getElementById('echo_ct_performed').checked;
+    document.getElementById('echo-result-field').style.display = performed ? 'block' : 'none';
+}
+</script>
+{% endblock %}

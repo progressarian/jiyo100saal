@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Timed Up and Go - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 1
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Test 5 of 8: Timed Up and Go (TUG)</span>
+        <span class="text-muted">Functional Mobility • 2 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 62.5%;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar1.tug', assessment_id=assessment.id) }}">
+    
+    <!-- Protocol Info -->
+    <div class="form-section">
+        <h5><i class="bi bi-clipboard-check"></i> Test Protocol</h5>
+        <ul class="mb-0">
+            <li>Patient seated in standard chair with armrests</li>
+            <li>On "Go": Stand up, walk 3 meters, turn around, walk back, sit down</li>
+            <li>Walk at safe, comfortable pace</li>
+            <li>Timing starts on "Go", ends when buttocks touch chair</li>
+            <li>2 trials, use FASTER time for scoring</li>
+        </ul>
+    </div>
+    
+    <!-- Timing Input -->
+    <div class="form-section">
+        <h5><i class="bi bi-stopwatch"></i> Test Times</h5>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label for="trial1_time" class="form-label required-field">Trial 1 Time</label>
+                <div class="input-group input-group-lg">
+                    <input type="number" class="form-control" id="trial1_time" name="trial1_time"
+                           value="{{ pillar1.tug_trial_1_sec if pillar1 and pillar1.tug_trial_1_sec else '' }}"
+                           step="0.1" min="3" max="120" required>
+                    <span class="input-group-text">seconds</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label for="trial2_time" class="form-label required-field">Trial 2 Time</label>
+                <div class="input-group input-group-lg">
+                    <input type="number" class="form-control" id="trial2_time" name="trial2_time"
+                           value="{{ pillar1.tug_trial_2_sec if pillar1 and pillar1.tug_trial_2_sec else '' }}"
+                           step="0.1" min="3" max="120" required>
+                    <span class="input-group-text">seconds</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Qualitative Observations -->
+    <div class="form-section">
+        <h5><i class="bi bi-eye"></i> Qualitative Observations (Score Modifiers)</h5>
+        <p class="text-muted">Check any issues observed during the test. Each reduces score by 0.1-0.2 points.</p>
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="unsteady_gait" id="unsteady_gait" value="yes"
+                                   {% if pillar1 and pillar1.tug_unsteady_gait %}checked{% endif %}>
+                            <label class="form-check-label" for="unsteady_gait">
+                                <strong>Unsteady Gait</strong> <span class="text-danger">(-0.2 pts)</span>
+                                <div class="text-muted small">Weaving, staggering, or loss of balance</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="unsteady_turn" id="unsteady_turn" value="yes"
+                                   {% if pillar1 and pillar1.tug_unsteady_turn %}checked{% endif %}>
+                            <label class="form-check-label" for="unsteady_turn">
+                                <strong>Unsteady Turn</strong> <span class="text-danger">(-0.2 pts)</span>
+                                <div class="text-muted small">Multiple steps or stumble when turning</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="used_arms" id="used_arms" value="yes"
+                                   {% if pillar1 and pillar1.tug_used_arms %}checked{% endif %}>
+                            <label class="form-check-label" for="used_arms">
+                                <strong>Used Arms to Rise</strong> <span class="text-warning">(-0.1 pts)</span>
+                                <div class="text-muted small">Pushed off armrests to stand</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="plopped_down" id="plopped_down" value="yes"
+                                   {% if pillar1 and pillar1.tug_plopped_down %}checked{% endif %}>
+                            <label class="form-check-label" for="plopped_down">
+                                <strong>Plopped Down</strong> <span class="text-danger">(-0.2 pts)</span>
+                                <div class="text-muted small">Uncontrolled descent into chair</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clinical Thresholds -->
+    <div class="form-section">
+        <h5><i class="bi bi-exclamation-triangle"></i> Clinical Thresholds</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert alert-success py-2 mb-0 text-center">
+                    <strong>&lt;10 sec</strong><br>Normal mobility
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-info py-2 mb-0 text-center">
+                    <strong>10-14 sec</strong><br>Good for elderly
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-warning py-2 mb-0 text-center">
+                    <strong>14-20 sec</strong><br>Impaired mobility
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-danger py-2 mb-0 text-center">
+                    <strong>&gt;20 sec</strong><br>⚠️ HIGH FALL RISK
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if pillar1 and pillar1.tug_score is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-success">{{ pillar1.tug_faster_sec }} sec</span>
+                <div class="text-muted">Faster trial</div>
+            </div>
+            <div class="col-md-3">
+                <span class="h4">Base: {{ pillar1.tug_base_score }} pts</span>
+            </div>
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-primary">{{ pillar1.tug_score }}/2.0 pts</span>
+                <div class="text-muted">After modifiers</div>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-success fs-6">{{ pillar1.tug_category }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg"></i> Save & Continue
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Digestive Function - Pillar 3{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --pillar3-primary: #2c3e50;
+        --pillar3-accent: #3498db;
+    }
+    
+    .test-header {
+        background: linear-gradient(135deg, var(--pillar3-primary) 0%, var(--pillar3-accent) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .radio-card {
+        border: 2px solid #dfe6e9;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .radio-card:hover {
+        border-color: var(--pillar3-accent);
+        background: rgba(52, 152, 219, 0.05);
+        transform: translateX(5px);
+    }
+    
+    .radio-card input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .radio-card input[type="radio"]:checked {
+        accent-color: var(--pillar3-accent);
+    }
+    
+    .radio-card.selected {
+        border-color: var(--pillar3-accent);
+        background: rgba(52, 152, 219, 0.1);
+        border-width: 3px;
+    }
+    
+    .radio-label {
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+    
+    .clinical-note {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-top: 0.25rem;
+    }
+    
+    .question-section {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .question-number {
+        background: var(--pillar3-accent);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.75rem;
+    }
+    
+    .btn-pillar3 {
+        background: var(--pillar3-accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-pillar3:hover {
+        background: var(--pillar3-primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="test-header">
+        <h2>Test 2: Digestive Function</h2>
+        <p class="mb-0">Maximum 6 points (Bowel: 2 pts + Stool: 1 pt + Reflux: 2 pts + Comfort: 1 pt)</p>
+    </div>
+
+    <form method="POST">
+        <!-- Q1: Bowel Frequency (2 pts) - CRITICAL: 6 OPTIONS! -->
+        <div class="question-section">
+            <h4 class="mb-4">
+                <span class="question-number">1</span>
+                How often do you typically have bowel movements?
+                <small class="text-muted">(2 points)</small>
+            </h4>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="1-2daily" id="bowel1"
+                       {% if pillar3 and pillar3.bowel_frequency == '1-2daily' %}checked{% endif %} required>
+                <label for="bowel1" class="radio-label ms-2">
+                    <strong>1-2 times per day</strong>
+                    <div class="clinical-note">Optimal digestive health</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="oncedaily" id="bowel2"
+                       {% if pillar3 and pillar3.bowel_frequency == 'oncedaily' %}checked{% endif %}>
+                <label for="bowel2" class="radio-label ms-2">
+                    <strong>Once daily</strong>
+                    <div class="clinical-note">Optimal - normal regularity</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="3-4daily" id="bowel3"
+                       {% if pillar3 and pillar3.bowel_frequency == '3-4daily' %}checked{% endif %}>
+                <label for="bowel3" class="radio-label ms-2">
+                    <strong>3-4 times per day</strong>
+                    <div class="clinical-note">Frequent - may indicate loose stools or mild IBS</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="2-3days" id="bowel4"
+                       {% if pillar3 and pillar3.bowel_frequency == '2-3days' %}checked{% endif %}>
+                <label for="bowel4" class="radio-label ms-2">
+                    <strong>Every 2-3 days</strong>
+                    <div class="clinical-note">Mild constipation - consider increasing fiber/water</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="5plus" id="bowel5"
+                       {% if pillar3 and pillar3.bowel_frequency == '5plus' %}checked{% endif %}>
+                <label for="bowel5" class="radio-label ms-2">
+                    <strong>5+ times per day</strong>
+                    <div class="clinical-note">⚠️ Very frequent - diarrhea/IBS/IBD concern</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="bowel_frequency" value="weekly" id="bowel6"
+                       {% if pillar3 and pillar3.bowel_frequency == 'weekly' %}checked{% endif %}>
+                <label for="bowel6" class="radio-label ms-2">
+                    <strong>Once a week or less</strong>
+                    <div class="clinical-note">⚠️ Severe constipation - medical evaluation recommended</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Q2: Stool Consistency (1 pt) -->
+        <div class="question-section">
+            <h4 class="mb-4">
+                <span class="question-number">2</span>
+                What is your typical stool consistency? (Bristol Stool Scale)
+                <small class="text-muted">(1 point)</small>
+            </h4>
+            
+            <div class="radio-card">
+                <input type="radio" name="stool_consistency" value="normal" id="stool1"
+                       {% if pillar3 and pillar3.stool_consistency == 'normal' %}checked{% endif %} required>
+                <label for="stool1" class="radio-label ms-2">
+                    <strong>Normal</strong> - Type 3-4: Smooth, like a sausage or soft snake
+                    <div class="clinical-note">Ideal - healthy digestion</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="stool_consistency" value="slightly" id="stool2"
+                       {% if pillar3 and pillar3.stool_consistency == 'slightly' %}checked{% endif %}>
+                <label for="stool2" class="radio-label ms-2">
+                    <strong>Slightly abnormal</strong> - Type 2 or 5: Lumpy or mushy
+                    <div class="clinical-note">Minor concern - may need diet adjustment</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="stool_consistency" value="abnormal" id="stool3"
+                       {% if pillar3 and pillar3.stool_consistency == 'abnormal' %}checked{% endif %}>
+                <label for="stool3" class="radio-label ms-2">
+                    <strong>Abnormal</strong> - Type 1, 6, or 7: Very hard lumps or watery
+                    <div class="clinical-note">⚠️ Constipation or diarrhea - needs attention</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Q3: Reflux Frequency (2 pts) -->
+        <div class="question-section">
+            <h4 class="mb-4">
+                <span class="question-number">3</span>
+                How often do you experience heartburn or acid reflux?
+                <small class="text-muted">(2 points)</small>
+            </h4>
+            
+            <div class="radio-card">
+                <input type="radio" name="reflux_frequency" value="never" id="reflux1"
+                       {% if pillar3 and pillar3.reflux_frequency == 'never' %}checked{% endif %} required>
+                <label for="reflux1" class="radio-label ms-2">
+                    <strong>Never or rarely</strong> - A few times per year or less
+                    <div class="clinical-note">No GERD - healthy esophageal function</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="reflux_frequency" value="occasional" id="reflux2"
+                       {% if pillar3 and pillar3.reflux_frequency == 'occasional' %}checked{% endif %}>
+                <label for="reflux2" class="radio-label ms-2">
+                    <strong>Occasionally</strong> - 1-2 times per month
+                    <div class="clinical-note">Mild - often triggered by specific foods</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="reflux_frequency" value="frequent" id="reflux3"
+                       {% if pillar3 and pillar3.reflux_frequency == 'frequent' %}checked{% endif %}>
+                <label for="reflux3" class="radio-label ms-2">
+                    <strong>Frequently</strong> - 1-2 times per week
+                    <div class="clinical-note">⚠️ GERD likely - lifestyle modifications recommended</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="reflux_frequency" value="daily" id="reflux4"
+                       {% if pillar3 and pillar3.reflux_frequency == 'daily' %}checked{% endif %}>
+                <label for="reflux4" class="radio-label ms-2">
+                    <strong>Daily or almost daily</strong>
+                    <div class="clinical-note">⚠️ Chronic GERD - medical evaluation needed</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Q4: Post-Meal Comfort (1 pt) -->
+        <div class="question-section">
+            <h4 class="mb-4">
+                <span class="question-number">4</span>
+                How do you feel after eating a normal-sized meal?
+                <small class="text-muted">(1 point)</small>
+            </h4>
+            
+            <div class="radio-card">
+                <input type="radio" name="meal_comfort" value="comfortable" id="comfort1"
+                       {% if pillar3 and pillar3.meal_comfort == 'comfortable' %}checked{% endif %} required>
+                <label for="comfort1" class="radio-label ms-2">
+                    <strong>Comfortable, no issues</strong>
+                    <div class="clinical-note">Good digestion - normal gastric emptying</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="meal_comfort" value="mild" id="comfort2"
+                       {% if pillar3 and pillar3.meal_comfort == 'mild' %}checked{% endif %}>
+                <label for="comfort2" class="radio-label ms-2">
+                    <strong>Mild discomfort occasionally</strong>
+                    <div class="clinical-note">Minor digestive issue - often food-specific</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="meal_comfort" value="bloated" id="comfort3"
+                       {% if pillar3 and pillar3.meal_comfort == 'bloated' %}checked{% endif %}>
+                <label for="comfort3" class="radio-label ms-2">
+                    <strong>Frequent bloating or fullness</strong>
+                    <div class="clinical-note">⚠️ Digestive concern - may indicate slow emptying</div>
+                </label>
+            </div>
+            
+            <div class="radio-card">
+                <input type="radio" name="meal_comfort" value="significant" id="comfort4"
+                       {% if pillar3 and pillar3.meal_comfort == 'significant' %}checked{% endif %}>
+                <label for="comfort4" class="radio-label ms-2">
+                    <strong>Significant discomfort regularly</strong>
+                    <div class="clinical-note">⚠️ Digestive disorder - medical evaluation recommended</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('pillar3.overview', assessment_id=assessment.id) }}" 
+               class="btn btn-secondary btn-lg">
+                ← Back
+            </a>
+            <button type="submit" class="btn btn-pillar3 btn-lg">
+                Save & Continue →
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Visual feedback for selected radio cards
+document.querySelectorAll('.radio-card input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Remove selected class from all cards in this group
+        const name = this.name;
+        document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+            r.closest('.radio-card').classList.remove('selected');
+        });
+        
+        // Add selected class to this card
+        if (this.checked) {
+            this.closest('.radio-card').classList.add('selected');
+        }
+    });
+    
+    // Set initial state
+    if (radio.checked) {
+        radio.closest('.radio-card').classList.add('selected');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Sleep | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-moon-stars"></i> Test 7: Sleep Duration & Quality (3 points)</h3>
+            <p class="mb-0">Duration, Quality, Onset</p>
+        </div>
+    </div>
+    
+    <form method="POST">
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Sleep Duration (1.5 points)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Average hours of sleep per night?</p>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="7.5-8.5" id="dur_optimal" {{ 'checked' if pillar4.sleep_duration == '7.5-8.5' else '' }}>
+                    <label for="dur_optimal" class="radio-label d-block"><strong>7.5-8.5 hours</strong> - Optimal</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="7-7.4" id="dur_good1" {{ 'checked' if pillar4.sleep_duration == '7-7.4' else '' }}>
+                    <label for="dur_good1" class="radio-label d-block"><strong>7-7.4 hours</strong> - Good</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="8.6-9" id="dur_good2" {{ 'checked' if pillar4.sleep_duration == '8.6-9' else '' }}>
+                    <label for="dur_good2" class="radio-label d-block"><strong>8.6-9 hours</strong> - Good (slightly long)</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="6-6.9" id="dur_insufficient" {{ 'checked' if pillar4.sleep_duration == '6-6.9' else '' }}>
+                    <label for="dur_insufficient" class="radio-label d-block"><strong>6-6.9 hours</strong> - Insufficient</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="less6" id="dur_deficient" {{ 'checked' if pillar4.sleep_duration == 'less6' else '' }}>
+                    <label for="dur_deficient" class="radio-label d-block"><strong><6 hours</strong> - Severely deficient</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_duration" value="more9" id="dur_excessive" {{ 'checked' if pillar4.sleep_duration == 'more9' else '' }}>
+                    <label for="dur_excessive" class="radio-label d-block"><strong>>9 hours</strong> - May indicate issue</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Sleep Quality (1 point)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">How often do you wake feeling rested?</p>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_quality" value="most" id="qual_most" {{ 'checked' if pillar4.sleep_quality == 'most' else '' }}>
+                    <label for="qual_most" class="radio-label d-block"><strong>Most days (5-7/week)</strong></label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_quality" value="sometimes" id="qual_sometimes" {{ 'checked' if pillar4.sleep_quality == 'sometimes' else '' }}>
+                    <label for="qual_sometimes" class="radio-label d-block"><strong>Sometimes (3-4/week)</strong></label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_quality" value="rarely" id="qual_rarely" {{ 'checked' if pillar4.sleep_quality == 'rarely' else '' }}>
+                    <label for="qual_rarely" class="radio-label d-block"><strong>Rarely (0-2/week)</strong></label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Sleep Onset (0.5 points)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">How long does it take you to fall asleep?</p>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_onset" value="fast" id="onset_fast" {{ 'checked' if pillar4.sleep_onset == 'fast' else '' }}>
+                    <label for="onset_fast" class="radio-label d-block"><strong><20 minutes</strong> - Fast</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_onset" value="medium" id="onset_medium" {{ 'checked' if pillar4.sleep_onset == 'medium' else '' }}>
+                    <label for="onset_medium" class="radio-label d-block"><strong>20-30 minutes</strong> - Moderate</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sleep_onset" value="slow" id="onset_slow" {{ 'checked' if pillar4.sleep_onset == 'slow' else '' }}>
+                    <label for="onset_slow" class="radio-label d-block"><strong>>30 minutes</strong> - Slow (insomnia concern)</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

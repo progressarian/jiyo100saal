@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Hemoglobin & Iron | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .input-mode-toggle { display: flex; border: 2px solid #8e44ad; border-radius: 8px; overflow: hidden; margin-bottom: 2rem; }
+    .input-mode-toggle button { flex: 1; padding: 1rem; border: none; background: white; color: #8e44ad; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .input-mode-toggle button.active { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-droplet"></i> Test 5: Hemoglobin & Iron Status (2 points)</h3>
+            <p class="mb-0">Sex-adjusted thresholds</p>
+        </div>
+    </div>
+    
+    <div class="alert alert-info mb-3">
+        <strong>Patient:</strong> {{ patient.full_name }} ({{ patient.sex|capitalize }})<br>
+        <strong>Sex-Adjusted Ranges:</strong><br>
+        {% if patient.sex == 'male' %}
+        Optimal: 14-17.5 g/dL | Acceptable: 13.5-13.9 | Borderline: 12-13.4 | Anemic: 10-11.9 | Severe: <10
+        {% else %}
+        Optimal: 13-16 g/dL | Acceptable: 12-12.9 | Borderline: 11-11.9 | Anemic: 9-10.9 | Severe: <9
+        {% endif %}
+    </div>
+    
+    <form method="POST">
+        <div class="input-mode-toggle">
+            <button type="button" id="btn-exact" class="active" onclick="switchMode('exact')">Exact Lab Values</button>
+            <button type="button" id="btn-category" onclick="switchMode('category')">Category Selection</button>
+        </div>
+        
+        <input type="hidden" name="input_mode" id="input_mode" value="exact">
+        
+        <div id="exact-mode">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hemoglobin (g/dL) *</label>
+                            <input type="number" step="0.1" name="hemoglobin" class="form-control" 
+                                   value="{{ pillar4.hemoglobin if pillar4.hemoglobin else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ferritin (ng/mL) <small>(optional)</small></label>
+                            <input type="number" step="0.1" name="ferritin" class="form-control"
+                                   value="{{ pillar4.ferritin if pillar4.ferritin else '' }}">
+                            <small class="text-muted">Normal: 30-300 for males, 15-150 for females</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="category-mode" style="display: none;">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="iron_category" value="optimal" id="iron_optimal">
+                        <label for="iron_optimal" class="radio-label d-block"><strong>Optimal</strong> - No anemia, normal iron status</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="iron_category" value="acceptable" id="iron_acceptable">
+                        <label for="iron_acceptable" class="radio-label d-block"><strong>Acceptable</strong> - Within normal range</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="iron_category" value="borderline" id="iron_borderline">
+                        <label for="iron_borderline" class="radio-label d-block"><strong>Borderline Low</strong> - Monitor, consider supplementation</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="iron_category" value="anemic" id="iron_anemic">
+                        <label for="iron_anemic" class="radio-label d-block"><strong>Anemic/Iron Deficient</strong> - Requires evaluation and treatment</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function switchMode(mode) {
+    document.getElementById('input_mode').value = mode;
+    if (mode === 'exact') {
+        document.getElementById('exact-mode').style.display = 'block';
+        document.getElementById('category-mode').style.display = 'none';
+        document.getElementById('btn-exact').classList.add('active');
+        document.getElementById('btn-category').classList.remove('active');
+    } else {
+        document.getElementById('exact-mode').style.display = 'none';
+        document.getElementById('category-mode').style.display = 'block';
+        document.getElementById('btn-exact').classList.remove('active');
+        document.getElementById('btn-category').classList.add('active');
+    }
+}
+</script>
+{% endblock %}

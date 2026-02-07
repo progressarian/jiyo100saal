@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Pillar 3: Metabolic & Digestive Health - Assessment #{{ assessment.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --pillar3-primary: #2c3e50;
+        --pillar3-accent: #3498db;
+        --pillar3-light: #ecf0f1;
+        --pillar3-success: #27ae60;
+    }
+    
+    .pillar3-header {
+        background: linear-gradient(135deg, var(--pillar3-primary) 0%, var(--pillar3-accent) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .score-box {
+        background: white;
+        border: 3px solid var(--pillar3-accent);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .score-number {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--pillar3-accent);
+    }
+    
+    .test-card {
+        background: white;
+        border-left: 4px solid var(--pillar3-accent);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .test-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateX(5px);
+    }
+    
+    .test-complete {
+        border-left-color: var(--pillar3-success);
+    }
+    
+    .test-incomplete {
+        border-left-color: #95a5a6;
+    }
+    
+    .test-number {
+        background: var(--pillar3-accent);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+    
+    .btn-pillar3 {
+        background: var(--pillar3-accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-pillar3:hover {
+        background: var(--pillar3-primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .progress-bar {
+        background: var(--pillar3-light);
+        height: 30px;
+        border-radius: 15px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, var(--pillar3-accent), var(--pillar3-success));
+        height: 100%;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .status-complete {
+        background: var(--pillar3-success);
+        color: white;
+    }
+    
+    .status-pending {
+        background: #95a5a6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="pillar3-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">Pillar 3: Metabolic & Digestive Health</h1>
+                <p class="mb-0">Patient: {{ patient.full_name }} | Age: {{ assessment.age_at_assessment }}</p>
+            </div>
+            <div class="score-box">
+                <div class="score-number">
+                    {% if pillar3 and pillar3.pillar3_total %}
+                        {{ "%.1f"|format(pillar3.pillar3_total) }}
+                    {% else %}
+                        --
+                    {% endif %}
+                </div>
+                <div>/ 20 points</div>
+                {% if pillar3 and pillar3.pillar3_category %}
+                    <div class="mt-2"><strong>{{ pillar3.pillar3_category }}</strong></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Test Completion Progress</h5>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (completed_count / 5 * 100)|round }}%;">
+                    {{ completed_count }} / 5 Tests Complete
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Cards -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Test 1: Glucose -->
+            <div class="test-card {% if tests_complete.glucose %}test-complete{% else %}test-incomplete{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="test-number">1</span>
+                        <div>
+                            <h5 class="mb-1">Glucose Metabolism & Energy</h5>
+                            <small class="text-muted">Blood glucose control + functional energy (5 points)</small>
+                            {% if pillar3 and pillar3.glucose_total_points %}
+                                <div class="mt-2">
+                                    <strong>Score: {{ "%.1f"|format(pillar3.glucose_total_points) }}/5.0</strong>
+                                    {% if pillar3.glucose_blood_category %}
+                                        <span class="ms-2 text-muted">({{ pillar3.glucose_blood_category }})</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if tests_complete.glucose %}status-complete{% else %}status-pending{% endif %}">
+                            {% if tests_complete.glucose %}✓ Complete{% else %}Pending{% endif %}
+                        </span>
+                        <a href="{{ url_for('pillar3.glucose', assessment_id=assessment.id) }}" 
+                           class="btn btn-pillar3 ms-3">
+                            {% if tests_complete.glucose %}Edit{% else %}Start{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 2: Digestive -->
+            <div class="test-card {% if tests_complete.digestive %}test-complete{% else %}test-incomplete{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="test-number">2</span>
+                        <div>
+                            <h5 class="mb-1">Digestive Function</h5>
+                            <small class="text-muted">Bowel movements, reflux, post-meal comfort (6 points)</small>
+                            {% if pillar3 and pillar3.digestive_total_points %}
+                                <div class="mt-2">
+                                    <strong>Score: {{ "%.1f"|format(pillar3.digestive_total_points) }}/6.0</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if tests_complete.digestive %}status-complete{% else %}status-pending{% endif %}">
+                            {% if tests_complete.digestive %}✓ Complete{% else %}Pending{% endif %}
+                        </span>
+                        <a href="{{ url_for('pillar3.digestive', assessment_id=assessment.id) }}" 
+                           class="btn btn-pillar3 ms-3">
+                            {% if tests_complete.digestive %}Edit{% else %}Start{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 3: Gut Symptoms -->
+            <div class="test-card {% if tests_complete.gut_symptoms %}test-complete{% else %}test-incomplete{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="test-number">3</span>
+                        <div>
+                            <h5 class="mb-1">Gut Symptoms</h5>
+                            <small class="text-muted">Bloating, pain, food intolerances (4 points)</small>
+                            {% if pillar3 and pillar3.gut_symptoms_total_points %}
+                                <div class="mt-2">
+                                    <strong>Score: {{ "%.1f"|format(pillar3.gut_symptoms_total_points) }}/4.0</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if tests_complete.gut_symptoms %}status-complete{% else %}status-pending{% endif %}">
+                            {% if tests_complete.gut_symptoms %}✓ Complete{% else %}Pending{% endif %}
+                        </span>
+                        <a href="{{ url_for('pillar3.gut_symptoms', assessment_id=assessment.id) }}" 
+                           class="btn btn-pillar3 ms-3">
+                            {% if tests_complete.gut_symptoms %}Edit{% else %}Start{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 4: Liver -->
+            <div class="test-card {% if tests_complete.liver %}test-complete{% else %}test-incomplete{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="test-number">4</span>
+                        <div>
+                            <h5 class="mb-1">Liver Function</h5>
+                            <small class="text-muted">ALT & AST enzymes (3 points)</small>
+                            {% if pillar3 and pillar3.liver_points %}
+                                <div class="mt-2">
+                                    <strong>Score: {{ "%.1f"|format(pillar3.liver_points) }}/3.0</strong>
+                                    {% if pillar3.liver_category %}
+                                        <span class="ms-2 text-muted">({{ pillar3.liver_category }})</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if tests_complete.liver %}status-complete{% else %}status-pending{% endif %}">
+                            {% if tests_complete.liver %}✓ Complete{% else %}Pending{% endif %}
+                        </span>
+                        <a href="{{ url_for('pillar3.liver', assessment_id=assessment.id) }}" 
+                           class="btn btn-pillar3 ms-3">
+                            {% if tests_complete.liver %}Edit{% else %}Start{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 5: Inflammation -->
+            <div class="test-card {% if tests_complete.inflammation %}test-complete{% else %}test-incomplete{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="test-number">5</span>
+                        <div>
+                            <h5 class="mb-1">Metabolic Inflammation</h5>
+                            <small class="text-muted">hs-CRP marker (2 points)</small>
+                            {% if pillar3 and pillar3.crp_points %}
+                                <div class="mt-2">
+                                    <strong>Score: {{ "%.1f"|format(pillar3.crp_points) }}/2.0</strong>
+                                    {% if pillar3.crp_risk_level %}
+                                        <span class="ms-2 text-muted">({{ pillar3.crp_risk_level }})</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge {% if tests_complete.inflammation %}status-complete{% else %}status-pending{% endif %}">
+                            {% if tests_complete.inflammation %}✓ Complete{% else %}Pending{% endif %}
+                        </span>
+                        <a href="{{ url_for('pillar3.inflammation', assessment_id=assessment.id) }}" 
+                           class="btn btn-pillar3 ms-3">
+                            {% if tests_complete.inflammation %}Edit{% else %}Start{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinical Alerts -->
+    {% if pillar3 and pillar3.clinical_alerts %}
+    <div class="card border-warning mt-4">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">⚠️ Clinical Alerts</h5>
+        </div>
+        <div class="card-body">
+            {% for alert in pillar3.clinical_alerts %}
+            <div class="alert alert-{{ 'danger' if alert.level == 'urgent' else 'warning' }} mb-2">
+                <strong>{{ alert.code }}:</strong> {{ alert.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="mt-4 d-flex justify-content-between">
+        <a href="{{ url_for('assessments.view_assessment', assessment_id=assessment.id) }}" 
+           class="btn btn-secondary">
+            ← Back to Assessment
+        </a>
+        
+        {% if completed_count == 5 %}
+        <button type="button" class="btn btn-pillar3 btn-lg" id="calculateTotalBtn">
+            Calculate Pillar 3 Total
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('calculateTotalBtn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Calculating...';
+    
+    try {
+        const response = await fetch('{{ url_for("pillar3.calculate_total", assessment_id=assessment.id) }}', {
+            method: 'POST',
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error calculating total. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Calculate Pillar 3 Total';
+        }
+    } catch (error) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Calculate Pillar 3 Total';
+    }
+});
+</script>
+{% endblock %}

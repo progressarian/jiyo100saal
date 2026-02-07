@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Balance Assessment - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 1
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Test 4 of 8: Balance Assessment</span>
+        <span class="text-muted">Romberg + Single-Leg Stance • 3 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 50%;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar1.balance', assessment_id=assessment.id) }}">
+    
+    <!-- Romberg Test -->
+    <div class="form-section">
+        <h5><i class="bi bi-clipboard-check"></i> Romberg Test (Pass/Fail)</h5>
+        <p class="text-muted">Stand with feet together, arms at sides, for 30 seconds</p>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Eyes Open (30 sec)</div>
+                    <div class="card-body">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="romberg_eyes_open" id="eo_pass" value="pass"
+                                   {% if pillar1 and pillar1.romberg_eyes_open %}checked{% endif %}>
+                            <label class="form-check-label text-success" for="eo_pass"><i class="bi bi-check-circle"></i> Pass</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="romberg_eyes_open" id="eo_fail" value="fail"
+                                   {% if pillar1 and pillar1.romberg_eyes_open == false %}checked{% endif %}>
+                            <label class="form-check-label text-danger" for="eo_fail"><i class="bi bi-x-circle"></i> Fail</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Eyes Closed (30 sec)</div>
+                    <div class="card-body">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="romberg_eyes_closed" id="ec_pass" value="pass"
+                                   {% if pillar1 and pillar1.romberg_eyes_closed %}checked{% endif %}>
+                            <label class="form-check-label text-success" for="ec_pass"><i class="bi bi-check-circle"></i> Pass</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="romberg_eyes_closed" id="ec_fail" value="fail"
+                                   {% if pillar1 and pillar1.romberg_eyes_closed == false %}checked{% endif %}>
+                            <label class="form-check-label text-danger" for="ec_fail"><i class="bi bi-x-circle"></i> Fail</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Single-Leg Stance -->
+    <div class="form-section">
+        <h5><i class="bi bi-bullseye"></i> Single-Leg Stance (Eyes Open)</h5>
+        <p class="text-muted">Stand on one leg, eyes open, hands on hips. Max 60 seconds. 2 trials per leg.</p>
+        
+        <div class="row g-4">
+            <!-- Left Leg -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-arrow-left-circle"></i> Left Leg</div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Trial 1</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="left_trial1" step="0.1" min="0" max="60"
+                                           value="{{ pillar1.single_leg_left_1 if pillar1 and pillar1.single_leg_left_1 else '' }}">
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Trial 2</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="left_trial2" step="0.1" min="0" max="60"
+                                           value="{{ pillar1.single_leg_left_2 if pillar1 and pillar1.single_leg_left_2 else '' }}">
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if pillar1 and pillar1.single_leg_left_best %}
+                        <div class="mt-2 text-center"><strong>Best: {{ pillar1.single_leg_left_best }} sec</strong></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Leg -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-arrow-right-circle"></i> Right Leg</div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Trial 1</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="right_trial1" step="0.1" min="0" max="60"
+                                           value="{{ pillar1.single_leg_right_1 if pillar1 and pillar1.single_leg_right_1 else '' }}">
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Trial 2</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="right_trial2" step="0.1" min="0" max="60"
+                                           value="{{ pillar1.single_leg_right_2 if pillar1 and pillar1.single_leg_right_2 else '' }}">
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if pillar1 and pillar1.single_leg_right_best %}
+                        <div class="mt-2 text-center"><strong>Best: {{ pillar1.single_leg_right_best }} sec</strong></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="bi bi-info-circle"></i> Score uses the <strong>BETTER</strong> leg's best time (conservative scoring)
+        </div>
+    </div>
+    
+    <!-- Clinical Thresholds -->
+    <div class="form-section">
+        <h5><i class="bi bi-exclamation-triangle"></i> Clinical Thresholds</h5>
+        <div class="alert alert-danger mb-0">
+            <strong>FALL RISK:</strong> Single-leg stance &lt;5 seconds is a significant fall risk indicator
+        </div>
+    </div>
+    
+    {% if pillar1 and pillar1.balance_total_score is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-success">{{ pillar1.single_leg_better_best }} sec</span>
+                <div class="text-muted">Better leg best</div>
+            </div>
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-primary">{{ pillar1.balance_total_score }}/3.0 pts</span>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-success fs-6">{{ pillar1.balance_category }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg"></i> Save & Continue
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

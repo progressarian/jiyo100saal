@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Mental Health Screening - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Header -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Test Info Card -->
+<div class="card mb-4" style="border-left: 4px solid #7c3aed;">
+    <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-heart" style="color: #7c3aed;"></i> Mental Health Screening</h5>
+        <p class="card-text mb-0 text-muted">
+            <strong>Instructions:</strong> Ask the patient about their experiences over the past 2 weeks.
+            These are validated screening questions for depression (PHQ-2) and anxiety (GAD-2).
+        </p>
+        <div class="mt-2">
+            <span class="badge bg-secondary">2 Points Max</span>
+            <span class="badge" style="background-color: #f3e8ff; color: #7c3aed;">PHQ-2: 1pt • GAD-2: 1pt</span>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    <!-- PHQ-2 Depression Screen -->
+    <div class="card mb-4">
+        <div class="card-header" style="background-color: #fce7f3; color: #be185d;">
+            <h6 class="mb-0"><i class="bi bi-cloud"></i> PHQ-2 Depression Screen (1 point max)</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">"Over the <strong>past 2 weeks</strong>, how often have you been bothered by the following?"</p>
+            
+            <!-- Question 1 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">1. Little interest or pleasure in doing things</label>
+                <div class="btn-group w-100" role="group">
+                    {% for val, label in [(0, 'Not at all'), (1, 'Several days'), (2, 'More than half'), (3, 'Nearly every day')] %}
+                    <input type="radio" class="btn-check" name="phq2_interest" id="phq2_interest_{{ val }}" value="{{ val }}"
+                           {% if pillar2 and pillar2.phq2_interest == val %}checked{% endif %} required>
+                    <label class="btn btn-outline-secondary" for="phq2_interest_{{ val }}">
+                        {{ label }}<br><small class="text-muted">({{ val }})</small>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Question 2 -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">2. Feeling down, depressed, or hopeless</label>
+                <div class="btn-group w-100" role="group">
+                    {% for val, label in [(0, 'Not at all'), (1, 'Several days'), (2, 'More than half'), (3, 'Nearly every day')] %}
+                    <input type="radio" class="btn-check" name="phq2_depressed" id="phq2_depressed_{{ val }}" value="{{ val }}"
+                           {% if pillar2 and pillar2.phq2_depressed == val %}checked{% endif %} required>
+                    <label class="btn btn-outline-secondary" for="phq2_depressed_{{ val }}">
+                        {{ label }}<br><small class="text-muted">({{ val }})</small>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if pillar2 and pillar2.phq2_total is not none %}
+            <div class="alert {% if pillar2.phq2_urgent_flag %}alert-danger{% elif pillar2.phq2_followup_flag %}alert-warning{% else %}alert-info{% endif %} mt-3">
+                <strong>PHQ-2 Total:</strong> {{ pillar2.phq2_total }}/6 ({{ pillar2.phq2_category }})
+                {% if pillar2.phq2_urgent_flag %}
+                <br><span class="fw-bold">⚠️ URGENT: Score ≥5 - Immediate mental health referral needed</span>
+                {% elif pillar2.phq2_followup_flag %}
+                <br><span class="fw-bold">⚠️ Score ≥3 - Full PHQ-9 evaluation recommended</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- GAD-2 Anxiety Screen -->
+    <div class="card mb-4">
+        <div class="card-header" style="background-color: #fef3c7; color: #92400e;">
+            <h6 class="mb-0"><i class="bi bi-lightning"></i> GAD-2 Anxiety Screen (1 point max)</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">"Over the <strong>past 2 weeks</strong>, how often have you been bothered by the following?"</p>
+            
+            <!-- Question 1 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">1. Feeling nervous, anxious, or on edge</label>
+                <div class="btn-group w-100" role="group">
+                    {% for val, label in [(0, 'Not at all'), (1, 'Several days'), (2, 'More than half'), (3, 'Nearly every day')] %}
+                    <input type="radio" class="btn-check" name="gad2_nervous" id="gad2_nervous_{{ val }}" value="{{ val }}"
+                           {% if pillar2 and pillar2.gad2_nervous == val %}checked{% endif %} required>
+                    <label class="btn btn-outline-secondary" for="gad2_nervous_{{ val }}">
+                        {{ label }}<br><small class="text-muted">({{ val }})</small>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Question 2 -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">2. Not being able to stop or control worrying</label>
+                <div class="btn-group w-100" role="group">
+                    {% for val, label in [(0, 'Not at all'), (1, 'Several days'), (2, 'More than half'), (3, 'Nearly every day')] %}
+                    <input type="radio" class="btn-check" name="gad2_worry" id="gad2_worry_{{ val }}" value="{{ val }}"
+                           {% if pillar2 and pillar2.gad2_worry == val %}checked{% endif %} required>
+                    <label class="btn btn-outline-secondary" for="gad2_worry_{{ val }}">
+                        {{ label }}<br><small class="text-muted">({{ val }})</small>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if pillar2 and pillar2.gad2_total is not none %}
+            <div class="alert {% if pillar2.gad2_urgent_flag %}alert-danger{% elif pillar2.gad2_followup_flag %}alert-warning{% else %}alert-info{% endif %} mt-3">
+                <strong>GAD-2 Total:</strong> {{ pillar2.gad2_total }}/6 ({{ pillar2.gad2_category }})
+                {% if pillar2.gad2_urgent_flag %}
+                <br><span class="fw-bold">⚠️ URGENT: Score ≥5 - Immediate mental health referral needed</span>
+                {% elif pillar2.gad2_followup_flag %}
+                <br><span class="fw-bold">⚠️ Score ≥3 - Full GAD-7 evaluation recommended</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Save Button -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-check-lg"></i> Save Mental Health Screening
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Scoring Reference -->
+<div class="card mt-4 mb-5" style="border-color: #7c3aed;">
+    <div class="card-header" style="background-color: #f3e8ff;">
+        <h6 class="mb-0" style="color: #7c3aed;"><i class="bi bi-info-circle"></i> Scoring & Clinical Action</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>PHQ-2 (Depression)</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Score</th><th>Points</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>0-1</td><td>1.0</td><td>No action needed</td></tr>
+                        <tr><td>2</td><td>0.7</td><td>Monitor</td></tr>
+                        <tr><td>3-4</td><td>0.3</td><td class="text-warning">Full PHQ-9 recommended</td></tr>
+                        <tr><td>5-6</td><td>0.0</td><td class="text-danger fw-bold">URGENT referral</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>GAD-2 (Anxiety)</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Score</th><th>Points</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>0-1</td><td>1.0</td><td>No action needed</td></tr>
+                        <tr><td>2</td><td>0.7</td><td>Monitor</td></tr>
+                        <tr><td>3-4</td><td>0.3</td><td class="text-warning">Full GAD-7 recommended</td></tr>
+                        <tr><td>5-6</td><td>0.0</td><td class="text-danger fw-bold">URGENT referral</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <p class="small text-muted mb-0">
+            <strong>Note:</strong> A score ≥3 on either screen indicates a positive result. 
+            Consider full-length assessments (PHQ-9, GAD-7) and clinical follow-up.
+            Scores ≥5 warrant immediate mental health evaluation.
+        </p>
+    </div>
+</div>
+
+<style>
+.btn-check:checked + .btn-outline-secondary {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+    color: white;
+}
+.btn-outline-secondary:hover {
+    background-color: #f3e8ff;
+}
+</style>
+{% endblock %}

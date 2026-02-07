@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Verbal Fluency - Animals - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold" style="color: #7c3aed;">Test 4 of 4: Verbal Fluency - Animals</span>
+        <span class="text-muted">Language & Semantic Memory • 2 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 100%; background-color: #7c3aed;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar2.verbal_fluency', assessment_id=assessment.id) }}">
+    
+    <!-- Protocol Info -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-clipboard-check"></i> Test Protocol</h5>
+        <ul class="mb-0">
+            <li>Patient names as many <strong>animals</strong> as possible in <strong>60 seconds</strong></li>
+            <li>Any animal from any category counts (mammals, birds, fish, insects, etc.)</li>
+            <li>Record all responses (for quality analysis)</li>
+            <li><strong>Do NOT count:</strong> repetitions or non-animals (intrusions)</li>
+            <li><strong>DO count:</strong> variations that are clearly different animals (e.g., "dog" and "poodle" both count)</li>
+            <li>Use a timer - stop exactly at 60 seconds</li>
+        </ul>
+    </div>
+    
+    <!-- Instructions Display -->
+    <div class="form-section" style="background-color: #f3e8ff; border-left: 4px solid #7c3aed;">
+        <h5 style="color: #7c3aed;"><i class="bi bi-info-circle-fill"></i> Instructions to Patient</h5>
+        <p class="mb-0 fst-italic">
+            "Tell me as many different animals as you can think of. 
+            They can be any kind of animal - pets, wild animals, birds, fish, insects, anything. 
+            Name as many as you can until I tell you to stop. 
+            Ready? Begin."
+        </p>
+    </div>
+    
+    <!-- Input -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-pencil-square"></i> Test Result</h5>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <label for="verbal_fluency_animals" class="form-label required-field">Number of Unique Animals Named</label>
+                <input type="number" class="form-control form-control-lg text-center" id="verbal_fluency_animals" name="verbal_fluency_animals"
+                       value="{{ pillar2.verbal_fluency_animals if pillar2 and pillar2.verbal_fluency_animals is not none else '' }}"
+                       min="0" max="60" required style="font-size: 2rem; font-weight: bold;">
+                <div class="form-text text-center">Count only unique, valid animal names</div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label for="repetitions" class="form-label">Repetitions (not counted)</label>
+                <input type="number" class="form-control" id="repetitions" name="repetitions"
+                       value="{{ pillar2.verbal_fluency_repetitions if pillar2 and pillar2.verbal_fluency_repetitions is not none else '' }}"
+                       min="0" max="30">
+                <div class="form-text">Same animal named more than once</div>
+            </div>
+            <div class="col-md-6">
+                <label for="intrusions" class="form-label">Intrusions (errors)</label>
+                <input type="number" class="form-control" id="intrusions" name="intrusions"
+                       value="{{ pillar2.verbal_fluency_intrusions if pillar2 and pillar2.verbal_fluency_intrusions is not none else '' }}"
+                       min="0" max="30">
+                <div class="form-text">Non-animals named (e.g., "car", "table")</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reference Ranges -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-graph-up"></i> Clinical Thresholds (Age {{ assessment.age_at_assessment }})</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #d4edda; color: #155724;">
+                    <strong>Excellent</strong><br>
+                    {% if assessment.age_at_assessment < 50 %}≥23
+                    {% elif assessment.age_at_assessment < 65 %}≥21
+                    {% elif assessment.age_at_assessment < 80 %}≥19
+                    {% else %}≥17{% endif %} animals<br>
+                    2.0 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #d1ecf1; color: #0c5460;">
+                    <strong>Good</strong><br>
+                    {% if assessment.age_at_assessment < 50 %}19-22
+                    {% elif assessment.age_at_assessment < 65 %}17-20
+                    {% elif assessment.age_at_assessment < 80 %}15-18
+                    {% else %}13-16{% endif %} animals<br>
+                    1.7 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #fff3cd; color: #856404;">
+                    <strong>Fair</strong><br>
+                    {% if assessment.age_at_assessment < 50 %}15-18
+                    {% elif assessment.age_at_assessment < 65 %}14-16
+                    {% elif assessment.age_at_assessment < 80 %}12-14
+                    {% else %}10-12{% endif %} animals<br>
+                    1.3 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert py-2 mb-0 text-center" style="background-color: #f8d7da; color: #721c24;">
+                    <strong>Poor</strong><br>
+                    {% if assessment.age_at_assessment < 50 %}&lt;12
+                    {% elif assessment.age_at_assessment < 65 %}&lt;11
+                    {% elif assessment.age_at_assessment < 80 %}&lt;10
+                    {% else %}&lt;8{% endif %} animals<br>
+                    ≤0.5 pts
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Clinical Alert:</strong> Verbal fluency &lt;12 animals may indicate language or executive function concern - consider formal evaluation.
+        </div>
+    </div>
+    
+    <!-- Scoring Notes -->
+    <div class="form-section">
+        <h5 style="color: #7c3aed; border-bottom-color: #7c3aed;"><i class="bi bi-lightbulb"></i> Scoring Guidelines</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <strong class="text-success">✓ Count These:</strong>
+                <ul class="small mb-0">
+                    <li>Different species (dog, cat, lion)</li>
+                    <li>Breeds if clearly different (poodle, bulldog)</li>
+                    <li>Specific animals (Labrador, German Shepherd)</li>
+                    <li>Male/female if clearly different (rooster, hen)</li>
+                    <li>Baby animals (puppy, kitten - if parent not named)</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <strong class="text-danger">✗ Don't Count:</strong>
+                <ul class="small mb-0">
+                    <li>Repetitions of same animal</li>
+                    <li>Non-animals (car, tree, person)</li>
+                    <li>Fictional creatures (unicorn, dragon)</li>
+                    <li>Generic + specific of same (dog + poodle)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    {% if pillar2 and pillar2.verbal_fluency_points is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-success">{{ pillar2.verbal_fluency_animals }} animals</span>
+            </div>
+            <div class="col-md-4">
+                <span class="display-6 fw-bold" style="color: #7c3aed;">{{ pillar2.verbal_fluency_points }}/2.0 pts</span>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-success fs-6">{{ pillar2.verbal_fluency_category }}</span>
+            </div>
+        </div>
+        {% if pillar2.verbal_fluency_repetitions or pillar2.verbal_fluency_intrusions %}
+        <div class="mt-2 text-muted small">
+            {% if pillar2.verbal_fluency_repetitions %}Repetitions: {{ pillar2.verbal_fluency_repetitions }}{% endif %}
+            {% if pillar2.verbal_fluency_intrusions %}| Intrusions: {{ pillar2.verbal_fluency_intrusions }}{% endif %}
+        </div>
+        {% endif %}
+        {% if pillar2.language_concern_flag %}
+        <div class="mt-2">
+            <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Language/Executive Concern Flagged</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-check-lg"></i> Save & Finish Pillar 2
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

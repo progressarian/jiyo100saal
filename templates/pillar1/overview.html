@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Pillar 1: Movement & Strength - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-gender-{{ 'male' if patient.sex == 'male' else 'female' }}"></i> 
+                {{ patient.sex|capitalize }}
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('assessments.view_assessment', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Assessment
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Indicator -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Pillar 1: Movement & Strength</span>
+        <span class="text-muted">{{ completed_count }}/8 Tests Complete</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" role="progressbar" style="width: {{ (completed_count / 8 * 100)|int }}%;" 
+             aria-valuenow="{{ completed_count }}" aria-valuemin="0" aria-valuemax="8"></div>
+    </div>
+</div>
+
+{% if pillar1 and pillar1.pillar1_total %}
+<!-- Total Score Card -->
+<div class="card bg-primary text-white mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="card-title mb-1">Total Pillar 1 Score</h5>
+                <p class="card-text opacity-75 mb-0">{{ pillar1.pillar1_category or 'Calculate to see category' }}</p>
+                {% if pillar1.functional_age_impact %}
+                <small class="opacity-75">
+                    Functional Age Impact: {{ '+' if pillar1.functional_age_impact > 0 else '' }}{{ pillar1.functional_age_impact }} years
+                </small>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="display-4 fw-bold">{{ pillar1.pillar1_total }}/20</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tests Grid -->
+<div class="row g-4">
+    
+    <!-- Test 1: Chair Stand -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.chair_stand %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-1-circle-fill me-2"></i>30-Second Chair Stand</span>
+                {% if tests_complete.chair_stand %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Lower body strength • 3 points max</p>
+                {% if pillar1 and pillar1.chair_stand_reps is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.chair_stand_reps }} reps</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.chair_stand_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.chair_stand_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.chair_stand', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.chair_stand %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 2: Grip Strength -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.grip_strength %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-2-circle-fill me-2"></i>Grip Strength</span>
+                {% if tests_complete.grip_strength %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Upper body strength • 3 points max</p>
+                {% if pillar1 and pillar1.grip_dominant_best is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.grip_dominant_best }} kg</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.grip_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.grip_category }}</span>
+                    {% if pillar1.sarcopenia_flag %}<span class="badge bg-danger ms-2">⚠️ Sarcopenia</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.grip_strength', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.grip_strength %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 3: Gait Speed -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.gait_speed %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-3-circle-fill me-2"></i>4-Meter Gait Speed</span>
+                {% if tests_complete.gait_speed %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Walking speed • 2 points max</p>
+                {% if pillar1 and pillar1.gait_speed_ms is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.gait_speed_ms }} m/s</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.gait_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.gait_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.gait_speed', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.gait_speed %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 4: Balance -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.balance %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-4-circle-fill me-2"></i>Balance Assessment</span>
+                {% if tests_complete.balance %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Romberg + Single-leg • 3 points max</p>
+                {% if pillar1 and pillar1.balance_total_score is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.single_leg_better_best }} sec</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.balance_total_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.balance_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.balance', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.balance %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 5: TUG -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.tug %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-5-circle-fill me-2"></i>Timed Up and Go</span>
+                {% if tests_complete.tug %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Functional mobility • 2 points max</p>
+                {% if pillar1 and pillar1.tug_faster_sec is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.tug_faster_sec }} sec</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.tug_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.tug_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.tug', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.tug %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 6: VO2 Max -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.vo2max %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-6-circle-fill me-2"></i>VO2 Max</span>
+                {% if tests_complete.vo2max %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Cardiovascular fitness • 4 points max</p>
+                {% if pillar1 and pillar1.vo2_max is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.vo2_max }} mL/kg/min</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.vo2_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.vo2_category }} ({{ pillar1.vo2_mets }} METs)</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.vo2max', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.vo2max %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 7: Flexibility -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.flexibility %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-7-circle-fill me-2"></i>Sit-and-Reach</span>
+                {% if tests_complete.flexibility %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Flexibility • 2 points max</p>
+                {% if pillar1 and pillar1.flexibility_best_cm is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.flexibility_best_cm }} cm</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.flexibility_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.flexibility_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.flexibility', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete.flexibility %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 8: 6MWT -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete['6mwt'] %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-8-circle-fill me-2"></i>6-Minute Walk Test</span>
+                {% if tests_complete['6mwt'] %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Endurance • 3 points max</p>
+                {% if pillar1 and pillar1.walk_6min_total_m is not none %}
+                <h3 class="text-primary mb-1">{{ pillar1.walk_6min_total_m }} m</h3>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ pillar1.walk_6min_score }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar1.walk_6min_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar1.walk_6min', assessment_id=assessment.id) }}" class="btn btn-primary w-100">
+                    {% if tests_complete['6mwt'] %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+{% if completed_count > 0 %}
+<div class="sticky-save-bar mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">{{ completed_count }}/8 tests completed</span>
+        <div>
+            <button onclick="calculateTotal()" class="btn btn-success btn-lg me-2">
+                <i class="bi bi-calculator"></i> Calculate Total Score
+            </button>
+            <a href="{{ url_for('reports.generate_report', assessment_id=assessment.id) }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-file-pdf"></i> Generate Report
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function calculateTotal() {
+    fetch('{{ url_for("pillar1.calculate_total", assessment_id=assessment.id) }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            let message = `Total Score: ${data.total.total_score}/20 (${data.total.category})\n`;
+            message += `Functional Age Impact: ${data.age_impact.interpretation}\n`;
+            
+            if (data.alerts && data.alerts.length > 0) {
+                message += '\n⚠️ ALERTS:\n';
+                data.alerts.forEach(alert => {
+                    message += `- ${alert.message}\n`;
+                });
+            }
+            alert(message);
+            location.reload();
+        }
+    })
+    .catch(error => alert('Error calculating total: ' + error));
+}
+</script>
+{% endblock %}

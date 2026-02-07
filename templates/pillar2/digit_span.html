@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Digit Span Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Header -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Test Info Card -->
+<div class="card mb-4" style="border-left: 4px solid #7c3aed;">
+    <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-123" style="color: #7c3aed;"></i> Digit Span Test</h5>
+        <p class="card-text mb-0 text-muted">
+            <strong>Instructions:</strong> Read digit sequences at 1 digit per second. The patient repeats them back 
+            (forward or backward). Continue until they fail 2 consecutive trials at the same length. Record the longest 
+            correctly recalled sequence.
+        </p>
+        <div class="mt-2">
+            <span class="badge bg-secondary">2 Points Max</span>
+            <span class="badge" style="background-color: #f3e8ff; color: #7c3aed;">Forward: 1pt • Backward: 1pt</span>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    <div class="row g-4">
+        <!-- Forward Digit Span -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header" style="background-color: #f3e8ff; color: #7c3aed;">
+                    <h6 class="mb-0"><i class="bi bi-arrow-right"></i> Digit Span Forward (1 point max)</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">"Repeat the numbers I say in the same order."</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Longest Forward Span</label>
+                        <input type="number" class="form-control form-control-lg text-center" name="digit_span_forward" 
+                               min="0" max="15" value="{{ pillar2.digit_span_forward if pillar2 and pillar2.digit_span_forward else '' }}"
+                               placeholder="e.g., 7">
+                        <div class="form-text">Number of digits in longest correctly repeated sequence</div>
+                    </div>
+                    
+                    <!-- Sample Sequences -->
+                    <div class="bg-light p-3 rounded small">
+                        <strong>Sample sequences:</strong><br>
+                        3 digits: 5-8-2<br>
+                        4 digits: 6-4-3-9<br>
+                        5 digits: 4-2-7-3-1<br>
+                        6 digits: 7-5-8-3-6-2<br>
+                        7 digits: 6-1-9-4-7-3-8<br>
+                        8 digits: 5-8-1-9-2-6-4-7
+                    </div>
+                    
+                    {% if pillar2 and pillar2.digit_span_forward_points %}
+                    <div class="mt-3 p-2 rounded" style="background-color: #f3e8ff;">
+                        <small><strong>Score:</strong> {{ pillar2.digit_span_forward_points }}/1.0 pt ({{ pillar2.digit_span_forward_category }})</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Backward Digit Span -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header" style="background-color: #f3e8ff; color: #7c3aed;">
+                    <h6 class="mb-0"><i class="bi bi-arrow-left"></i> Digit Span Backward (1 point max)</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">"Repeat the numbers I say in <strong>reverse order</strong>."</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Longest Backward Span</label>
+                        <input type="number" class="form-control form-control-lg text-center" name="digit_span_backward" 
+                               min="0" max="12" value="{{ pillar2.digit_span_backward if pillar2 and pillar2.digit_span_backward else '' }}"
+                               placeholder="e.g., 5">
+                        <div class="form-text">Number of digits in longest correctly reversed sequence</div>
+                    </div>
+                    
+                    <!-- Sample Sequences -->
+                    <div class="bg-light p-3 rounded small">
+                        <strong>Sample sequences:</strong><br>
+                        2 digits: 2-4 → "4-2"<br>
+                        3 digits: 6-2-9 → "9-2-6"<br>
+                        4 digits: 3-2-7-9 → "9-7-2-3"<br>
+                        5 digits: 4-9-6-8-1 → "1-8-6-9-4"<br>
+                        6 digits: 6-1-8-4-3-9 → "9-3-4-8-1-6"
+                    </div>
+                    
+                    {% if pillar2 and pillar2.digit_span_backward_points %}
+                    <div class="mt-3 p-2 rounded" style="background-color: #f3e8ff;">
+                        <small><strong>Score:</strong> {{ pillar2.digit_span_backward_points }}/1.0 pt ({{ pillar2.digit_span_backward_category }})</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Previous Result Summary -->
+    {% if pillar2 and pillar2.digit_span_total %}
+    <div class="alert {% if pillar2.memory_deficit_flag %}alert-warning{% else %}alert-info{% endif %} mt-4">
+        <div class="row">
+            <div class="col">
+                <strong>Previous Result:</strong><br>
+                Forward: {{ pillar2.digit_span_forward }} ({{ pillar2.digit_span_forward_points or 0 }} pt) |
+                Backward: {{ pillar2.digit_span_backward }} ({{ pillar2.digit_span_backward_points or 0 }} pt) |
+                <strong>Total Span: {{ pillar2.digit_span_total }}</strong> |
+                Combined: {{ pillar2.digit_span_points }}/2.0 pts ({{ pillar2.digit_span_category }})
+                {% if pillar2.memory_deficit_flag %}
+                <br><span class="text-warning fw-bold">⚠️ Total span &lt;10 indicates working memory deficit</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Button -->
+    <div class="sticky-save-bar mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-check-lg"></i> Save Digit Span
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Scoring Reference -->
+<div class="card mt-4 mb-5" style="border-color: #7c3aed;">
+    <div class="card-header" style="background-color: #f3e8ff;">
+        <h6 class="mb-0" style="color: #7c3aed;"><i class="bi bi-info-circle"></i> Scoring Reference</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Forward (1 pt max)</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><td>8+ digits</td><td>1.0 pts - Excellent</td></tr>
+                        <tr><td>7 digits</td><td>0.8 pts - Good</td></tr>
+                        <tr><td>6 digits</td><td>0.6 pts - Fair</td></tr>
+                        <tr><td>5 digits</td><td>0.4 pts - Below Average</td></tr>
+                        <tr><td>4 digits</td><td>0.2 pts - Poor</td></tr>
+                        <tr><td>≤3 digits</td><td>0.0 pts - Very Poor</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Backward (1 pt max)</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr><td>7+ digits</td><td>1.0 pts - Excellent</td></tr>
+                        <tr><td>6 digits</td><td>0.8 pts - Good</td></tr>
+                        <tr><td>5 digits</td><td>0.6 pts - Fair</td></tr>
+                        <tr><td>4 digits</td><td>0.4 pts - Below Average</td></tr>
+                        <tr><td>3 digits</td><td>0.2 pts - Poor</td></tr>
+                        <tr><td>≤2 digits</td><td>0.0 pts - Very Poor</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <p class="small text-muted mb-0">
+            <strong>Clinical Note:</strong> Total span (Forward + Backward) &lt;10 suggests working memory deficit.
+            Backward span tests executive control in addition to short-term memory.
+        </p>
+    </div>
+</div>
+{% endblock %}

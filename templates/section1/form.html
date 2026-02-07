@@ -1,0 +1,772 @@
+{% extends "base.html" %}
+
+{% block title %}Section 1 - Body Composition | {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} yrs</span>
+            <span class="badge bg-light text-dark me-2">{{ patient.sex|capitalize }}</span>
+            <span class="badge bg-light text-dark">
+                Height: {{ section0.height_cm }} cm | Weight: {{ section0.weight_kg }} kg | BMI: {{ section0.bmi }}
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <small>Assessment Date: {{ assessment.assessment_date.strftime('%B %d, %Y') }}</small>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Indicator -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Section 1: Body Composition</span>
+        <span class="text-muted">Step 2 of 5</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" role="progressbar" style="width: 40%;" aria-valuenow="40"></div>
+    </div>
+</div>
+
+<!-- Reference Data from Section 0 -->
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i>
+    <strong>From Section 0:</strong>
+    Height: <strong>{{ section0.height_cm }} cm</strong> |
+    Weight: <strong>{{ section0.weight_kg }} kg</strong> |
+    {% if section0.waist_circumference_cm %}
+    Waist: <strong>{{ section0.waist_circumference_cm }} cm</strong> |
+    {% endif %}
+    {% if section0.hip_circumference_cm %}
+    Hip: <strong>{{ section0.hip_circumference_cm }} cm</strong>
+    {% endif %}
+</div>
+
+<form method="POST" action="{{ url_for('section1.save_section1', assessment_id=assessment.id) }}" id="section1Form">
+    
+    <!-- ================================================================= -->
+    <!-- INPUT METHOD SELECTION -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-sliders"></i> Select Input Method</h5>
+        
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="input_method" id="method_dexa" value="dexa"
+                           {{ 'checked' if section1 and section1.input_method == 'dexa' else 'checked' if not section1 else '' }}>
+                    <label class="btn btn-outline-primary" for="method_dexa">
+                        <i class="bi bi-radioactive"></i> DEXA Scan
+                        <small class="d-block text-muted">Gold standard</small>
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="input_method" id="method_bia" value="bia"
+                           {{ 'checked' if section1 and section1.input_method == 'bia' else '' }}>
+                    <label class="btn btn-outline-primary" for="method_bia">
+                        <i class="bi bi-lightning"></i> BIA Device
+                        <small class="d-block text-muted">Bioelectrical impedance</small>
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="input_method" id="method_manual" value="manual"
+                           {{ 'checked' if section1 and section1.input_method == 'manual' else '' }}>
+                    <label class="btn btn-outline-primary" for="method_manual">
+                        <i class="bi bi-rulers"></i> Manual
+                        <small class="d-block text-muted">Skinfolds / Circumferences</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- DEXA INPUT SECTION -->
+    <!-- ================================================================= -->
+    <div id="dexa_section" class="form-section input-section" style="display: none;">
+        <h5><i class="bi bi-radioactive"></i> DEXA Scan Results</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="dexa_body_fat_pct" class="form-label required-field">Total Body Fat %</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="dexa_body_fat_pct" name="dexa_body_fat_pct"
+                           value="{{ section1.dexa_body_fat_pct if section1 else '' }}"
+                           min="5" max="60" step="0.1" placeholder="e.g., 25.5">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_fat_mass_kg" class="form-label">Total Fat Mass</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="dexa_fat_mass_kg" name="dexa_fat_mass_kg"
+                           value="{{ section1.dexa_total_fat_mass_kg if section1 else '' }}"
+                           min="0" max="150" step="0.1" placeholder="e.g., 20.5">
+                    <span class="input-group-text">kg</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_lean_mass_kg" class="form-label required-field">Total Lean Mass</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="dexa_lean_mass_kg" name="dexa_lean_mass_kg"
+                           value="{{ section1.dexa_lean_mass_kg if section1 else '' }}"
+                           min="20" max="100" step="0.1" placeholder="e.g., 55.0">
+                    <span class="input-group-text">kg</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_asmi" class="form-label">ASMI (Appendicular)</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="dexa_asmi" name="dexa_asmi"
+                           value="{{ section1.dexa_asmi if section1 else '' }}"
+                           min="3" max="15" step="0.01" placeholder="e.g., 7.5">
+                    <span class="input-group-text">kg/m²</span>
+                </div>
+                <div class="form-text">Arms + Legs lean mass / height²</div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_visceral_fat_area" class="form-label">Visceral Fat Area</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="dexa_visceral_fat_area" name="dexa_visceral_fat_area"
+                           value="{{ section1.dexa_visceral_fat_area if section1 else '' }}"
+                           min="0" max="500" placeholder="e.g., 120">
+                    <span class="input-group-text">cm²</span>
+                </div>
+                <div class="form-text">
+                    Risk: <span id="vfa_risk" class="fw-bold">--</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_android_gynoid_ratio" class="form-label">Android/Gynoid Ratio</label>
+                <input type="number" class="form-control" id="dexa_android_gynoid_ratio" name="dexa_android_gynoid_ratio"
+                       value="{{ section1.dexa_android_gynoid_ratio if section1 else '' }}"
+                       min="0.3" max="2.0" step="0.01" placeholder="e.g., 1.05">
+            </div>
+            
+            <div class="col-12"><hr><h6>Bone Mineral Density (T-Scores)</h6></div>
+            
+            <div class="col-md-4">
+                <label for="dexa_lumbar_tscore" class="form-label">Lumbar Spine T-Score</label>
+                <input type="number" class="form-control" id="dexa_lumbar_tscore" name="dexa_lumbar_tscore"
+                       value="{{ section1.dexa_lumbar_tscore if section1 else '' }}"
+                       min="-5" max="3" step="0.1" placeholder="e.g., -1.2">
+                <div class="form-text" id="lumbar_category">--</div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="dexa_hip_tscore" class="form-label">Hip T-Score</label>
+                <input type="number" class="form-control" id="dexa_hip_tscore" name="dexa_hip_tscore"
+                       value="{{ section1.dexa_hip_tscore if section1 else '' }}"
+                       min="-5" max="3" step="0.1" placeholder="e.g., -0.8">
+                <div class="form-text" id="hip_category">--</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- BIA INPUT SECTION -->
+    <!-- ================================================================= -->
+    <div id="bia_section" class="form-section input-section" style="display: none;">
+        <h5><i class="bi bi-lightning"></i> BIA Device Results</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="bia_body_fat_pct" class="form-label required-field">Body Fat %</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="bia_body_fat_pct" name="bia_body_fat_pct"
+                           value="{{ section1.bia_body_fat_pct if section1 else '' }}"
+                           min="5" max="60" step="0.1" placeholder="e.g., 25.5">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="bia_lean_mass_kg" class="form-label required-field">Lean Mass</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="bia_lean_mass_kg" name="bia_lean_mass_kg"
+                           value="{{ section1.bia_lean_mass_kg if section1 else '' }}"
+                           min="20" max="100" step="0.1" placeholder="e.g., 55.0">
+                    <span class="input-group-text">kg</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="bia_water_pct" class="form-label">Total Body Water %</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="bia_water_pct" name="bia_water_pct"
+                           value="{{ section1.bia_water_pct if section1 else '' }}"
+                           min="30" max="80" step="0.1" placeholder="e.g., 55.0">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="bia_visceral_fat_level" class="form-label">Visceral Fat Level</label>
+                <input type="number" class="form-control" id="bia_visceral_fat_level" name="bia_visceral_fat_level"
+                       value="{{ section1.bia_visceral_fat_level if section1 else '' }}"
+                       min="1" max="30" placeholder="e.g., 12 (device-specific 1-30 scale)">
+                <div class="form-text">
+                    Risk: <span id="bia_vf_risk" class="fw-bold">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- MANUAL INPUT SECTION -->
+    <!-- ================================================================= -->
+    <div id="manual_section" class="form-section input-section" style="display: none;">
+        <h5><i class="bi bi-rulers"></i> Manual Measurements</h5>
+        
+        <!-- Manual type toggle -->
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="manual_type" id="manual_skinfolds" value="skinfolds" checked>
+                    <label class="btn btn-outline-secondary" for="manual_skinfolds">
+                        <i class="bi bi-arrows-angle-expand"></i> 7-Site Skinfolds
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="manual_type" id="manual_circumferences" value="circumferences">
+                    <label class="btn btn-outline-secondary" for="manual_circumferences">
+                        <i class="bi bi-circle"></i> Navy Method (Circumferences)
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Skinfolds Sub-Section -->
+        <div id="skinfolds_subsection">
+            <h6>7-Site Skinfold Measurements (mm)</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="skinfold_chest_mm" class="form-label">Chest (Pectoral)</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_chest_mm" name="skinfold_chest_mm"
+                           value="{{ section1.skinfold_chest_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_abdomen_mm" class="form-label">Abdomen</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_abdomen_mm" name="skinfold_abdomen_mm"
+                           value="{{ section1.skinfold_abdomen_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_thigh_mm" class="form-label">Thigh</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_thigh_mm" name="skinfold_thigh_mm"
+                           value="{{ section1.skinfold_thigh_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_triceps_mm" class="form-label">Triceps</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_triceps_mm" name="skinfold_triceps_mm"
+                           value="{{ section1.skinfold_triceps_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_subscapular_mm" class="form-label">Subscapular</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_subscapular_mm" name="skinfold_subscapular_mm"
+                           value="{{ section1.skinfold_subscapular_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_suprailiac_mm" class="form-label">Suprailiac</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_suprailiac_mm" name="skinfold_suprailiac_mm"
+                           value="{{ section1.skinfold_suprailiac_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label for="skinfold_midaxillary_mm" class="form-label">Midaxillary</label>
+                    <input type="number" class="form-control skinfold-input" id="skinfold_midaxillary_mm" name="skinfold_midaxillary_mm"
+                           value="{{ section1.skinfold_midaxillary_mm if section1 else '' }}"
+                           min="1" max="50" step="0.5" placeholder="mm">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sum of Skinfolds</label>
+                    <input type="text" class="form-control calculated-field" id="skinfold_sum" readonly placeholder="Auto-calculated">
+                </div>
+            </div>
+            
+            <div class="row g-3 mt-3">
+                <div class="col-md-12">
+                    <button type="button" class="btn btn-info" id="calculate_skinfolds_btn">
+                        <i class="bi bi-calculator"></i> Calculate Body Fat from Skinfolds
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Circumferences Sub-Section -->
+        <div id="circumferences_subsection" style="display: none;">
+            <h6>Navy Method (Circumferences)</h6>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                Using Waist from Section 0: <strong>{{ section0.waist_circumference_cm }} cm</strong>
+                {% if section0.hip_circumference_cm %}
+                | Hip: <strong>{{ section0.hip_circumference_cm }} cm</strong>
+                {% endif %}
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="neck_circumference_cm" class="form-label required-field">Neck Circumference</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="neck_circumference_cm" name="neck_circumference_cm"
+                               value="{{ section1.neck_circumference_cm if section1 else '' }}"
+                               min="25" max="60" step="0.1" placeholder="e.g., 38">
+                        <span class="input-group-text">cm</span>
+                    </div>
+                    <div class="form-text">Below larynx (Adam's apple)</div>
+                </div>
+                
+                <div class="col-md-4">
+                    <label class="form-label">Waist (from Section 0)</label>
+                    <input type="text" class="form-control" readonly value="{{ section0.waist_circumference_cm or 'Not entered' }} cm">
+                </div>
+                
+                {% if patient.sex == 'female' %}
+                <div class="col-md-4">
+                    <label class="form-label">Hip (from Section 0)</label>
+                    <input type="text" class="form-control" readonly value="{{ section0.hip_circumference_cm or 'Required for females' }} cm">
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row g-3 mt-3">
+                <div class="col-md-12">
+                    <button type="button" class="btn btn-info" id="calculate_navy_btn">
+                        <i class="bi bi-calculator"></i> Calculate Body Fat (Navy Method)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- CALCULATED RESULTS DISPLAY -->
+    <!-- ================================================================= -->
+    <div class="form-section" id="results_section">
+        <h5><i class="bi bi-graph-up"></i> Calculated Results</h5>
+        
+        <div class="row g-4">
+            <!-- Body Fat % -->
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Body Fat %</h6>
+                        <h3 id="result_body_fat" class="mb-1">
+                            {{ section1.body_fat_pct|string + '%' if section1 and section1.body_fat_pct else '--' }}
+                        </h3>
+                        <span id="result_bf_category" class="badge {{ 'bg-success' if section1 and section1.body_fat_category == 'Excellent' else 'bg-warning' if section1 and section1.body_fat_category in ['Fair', 'Poor'] else 'bg-danger' if section1 and section1.body_fat_category == 'Very Poor' else 'bg-secondary' }}">
+                            {{ section1.body_fat_category if section1 and section1.body_fat_category else '--' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- LMI -->
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Lean Mass Index</h6>
+                        <h3 id="result_lmi" class="mb-1">
+                            {{ section1.lean_mass_index|string + ' kg/m²' if section1 and section1.lean_mass_index else '--' }}
+                        </h3>
+                        <span id="result_lmi_category" class="badge {{ 'bg-success' if section1 and section1.lmi_category == 'Excellent' else 'bg-danger' if section1 and section1.lmi_category == 'Sarcopenia' else 'bg-secondary' }}">
+                            {{ section1.lmi_category if section1 and section1.lmi_category else '--' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WHR -->
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Waist-Hip Ratio</h6>
+                        <h3 id="result_whr" class="mb-1">
+                            {{ section1.waist_hip_ratio if section1 and section1.waist_hip_ratio else '--' }}
+                        </h3>
+                        <span class="badge bg-secondary">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sarcopenia Risk -->
+            <div class="col-md-3">
+                <div class="card h-100 {{ 'border-danger' if section1 and section1.sarcopenia_risk else '' }}">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Sarcopenia Risk</h6>
+                        <h3 id="result_sarcopenia" class="mb-1 {{ 'text-danger' if section1 and section1.sarcopenia_risk else 'text-success' }}">
+                            {% if section1 %}
+                                {{ 'AT RISK' if section1.sarcopenia_risk else 'Normal' }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </h3>
+                        <small class="text-muted">
+                            {% if patient.sex == 'male' %}LMI < 14 kg/m²{% else %}LMI < 11 kg/m²{% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SAVE BUTTONS -->
+    <!-- ================================================================= -->
+    <div class="sticky-save-bar">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <a href="{{ url_for('section0.section0_form', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Section 0
+                </a>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <button type="submit" name="save_action" value="save" class="btn btn-outline-primary">
+                    <i class="bi bi-save"></i> Save Draft
+                </button>
+                <button type="submit" name="save_action" value="save_continue" class="btn btn-primary">
+                    <i class="bi bi-arrow-right-circle"></i> Save & Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Patient data from Section 0
+    const patientData = {
+        age: {{ assessment.age_at_assessment }},
+        sex: '{{ patient.sex }}',
+        height_cm: {{ section0.height_cm }},
+        weight_kg: {{ section0.weight_kg }},
+        waist_cm: {{ section0.waist_circumference_cm or 'null' }},
+        hip_cm: {{ section0.hip_circumference_cm or 'null' }}
+    };
+    
+    // =========================================================
+    // INPUT METHOD TOGGLE
+    // =========================================================
+    const methodRadios = document.querySelectorAll('input[name="input_method"]');
+    const inputSections = document.querySelectorAll('.input-section');
+    
+    function showInputSection(method) {
+        inputSections.forEach(section => {
+            section.style.display = 'none';
+        });
+        const target = document.getElementById(method + '_section');
+        if (target) {
+            target.style.display = 'block';
+        }
+    }
+    
+    methodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            showInputSection(this.value);
+        });
+        if (radio.checked) {
+            showInputSection(radio.value);
+        }
+    });
+    
+    // =========================================================
+    // MANUAL TYPE TOGGLE (Skinfolds vs Circumferences)
+    // =========================================================
+    const manualRadios = document.querySelectorAll('input[name="manual_type"]');
+    const skinfoldsSub = document.getElementById('skinfolds_subsection');
+    const circumferencesSub = document.getElementById('circumferences_subsection');
+    
+    manualRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'skinfolds') {
+                skinfoldsSub.style.display = 'block';
+                circumferencesSub.style.display = 'none';
+            } else {
+                skinfoldsSub.style.display = 'none';
+                circumferencesSub.style.display = 'block';
+            }
+        });
+    });
+    
+    // =========================================================
+    // LMI AUTO-CALCULATION (DEXA & BIA)
+    // =========================================================
+    const dexaLeanMass = document.getElementById('dexa_lean_mass_kg');
+    const biaLeanMass = document.getElementById('bia_lean_mass_kg');
+    
+    function calculateLMIFromLeanMass(leanMassKg) {
+        if (leanMassKg && patientData.height_cm) {
+            const heightM = patientData.height_cm / 100;
+            const lmi = leanMassKg / (heightM * heightM);
+            return lmi.toFixed(2);
+        }
+        return null;
+    }
+    
+    function updateLMIResult(leanMassKg) {
+        const lmi = calculateLMIFromLeanMass(leanMassKg);
+        if (lmi) {
+            document.getElementById('result_lmi').textContent = lmi + ' kg/m²';
+            
+            // Check sarcopenia
+            const threshold = patientData.sex === 'male' ? 14 : 11;
+            const isAtRisk = parseFloat(lmi) < threshold;
+            
+            const sarcopeniaEl = document.getElementById('result_sarcopenia');
+            sarcopeniaEl.textContent = isAtRisk ? 'AT RISK' : 'Normal';
+            sarcopeniaEl.className = 'mb-1 ' + (isAtRisk ? 'text-danger' : 'text-success');
+            
+            // LMI category
+            let category = 'Unknown';
+            if (patientData.sex === 'male') {
+                if (lmi >= 20) category = 'Excellent';
+                else if (lmi >= 18) category = 'Good';
+                else if (lmi >= 16) category = 'Fair';
+                else if (lmi >= 14) category = 'Low';
+                else category = 'Sarcopenia';
+            } else {
+                if (lmi >= 17) category = 'Excellent';
+                else if (lmi >= 15) category = 'Good';
+                else if (lmi >= 13) category = 'Fair';
+                else if (lmi >= 11) category = 'Low';
+                else category = 'Sarcopenia';
+            }
+            document.getElementById('result_lmi_category').textContent = category;
+        }
+    }
+    
+    if (dexaLeanMass) {
+        dexaLeanMass.addEventListener('input', function() {
+            updateLMIResult(parseFloat(this.value));
+        });
+    }
+    if (biaLeanMass) {
+        biaLeanMass.addEventListener('input', function() {
+            updateLMIResult(parseFloat(this.value));
+        });
+    }
+    
+    // =========================================================
+    // BODY FAT % AUTO-UPDATE
+    // =========================================================
+    const dexaBF = document.getElementById('dexa_body_fat_pct');
+    const biaBF = document.getElementById('bia_body_fat_pct');
+    
+    function updateBodyFatResult(bf) {
+        if (bf) {
+            document.getElementById('result_body_fat').textContent = bf.toFixed(1) + '%';
+        }
+    }
+    
+    if (dexaBF) {
+        dexaBF.addEventListener('input', function() {
+            updateBodyFatResult(parseFloat(this.value));
+        });
+    }
+    if (biaBF) {
+        biaBF.addEventListener('input', function() {
+            updateBodyFatResult(parseFloat(this.value));
+        });
+    }
+    
+    // =========================================================
+    // VISCERAL FAT RISK INDICATORS
+    // =========================================================
+    const dexaVFA = document.getElementById('dexa_visceral_fat_area');
+    const biaVFL = document.getElementById('bia_visceral_fat_level');
+    
+    function getVFARisk(vfa) {
+        if (vfa < 100) return { risk: 'Low Risk', class: 'text-success' };
+        if (vfa < 130) return { risk: 'Borderline', class: 'text-warning' };
+        if (vfa < 160) return { risk: 'Elevated', class: 'text-warning' };
+        if (vfa < 200) return { risk: 'High', class: 'text-danger' };
+        return { risk: 'Very High', class: 'text-danger' };
+    }
+    
+    function getBIAVFRisk(level) {
+        if (level < 10) return { risk: 'Healthy', class: 'text-success' };
+        if (level < 15) return { risk: 'Elevated', class: 'text-warning' };
+        return { risk: 'High', class: 'text-danger' };
+    }
+    
+    if (dexaVFA) {
+        dexaVFA.addEventListener('input', function() {
+            const result = getVFARisk(parseInt(this.value));
+            const el = document.getElementById('vfa_risk');
+            el.textContent = result.risk;
+            el.className = 'fw-bold ' + result.class;
+        });
+    }
+    
+    if (biaVFL) {
+        biaVFL.addEventListener('input', function() {
+            const result = getBIAVFRisk(parseInt(this.value));
+            const el = document.getElementById('bia_vf_risk');
+            el.textContent = result.risk;
+            el.className = 'fw-bold ' + result.class;
+        });
+    }
+    
+    // =========================================================
+    // T-SCORE CATEGORIES
+    // =========================================================
+    const lumbarT = document.getElementById('dexa_lumbar_tscore');
+    const hipT = document.getElementById('dexa_hip_tscore');
+    
+    function getTScoreCategory(t) {
+        if (t >= -1.0) return 'Normal';
+        if (t > -2.5) return 'Osteopenia';
+        return 'Osteoporosis';
+    }
+    
+    if (lumbarT) {
+        lumbarT.addEventListener('input', function() {
+            document.getElementById('lumbar_category').textContent = getTScoreCategory(parseFloat(this.value));
+        });
+    }
+    if (hipT) {
+        hipT.addEventListener('input', function() {
+            document.getElementById('hip_category').textContent = getTScoreCategory(parseFloat(this.value));
+        });
+    }
+    
+    // =========================================================
+    // SKINFOLD SUM AUTO-CALCULATION
+    // =========================================================
+    const skinfoldInputs = document.querySelectorAll('.skinfold-input');
+    const skinfoldSumEl = document.getElementById('skinfold_sum');
+    
+    function updateSkinfoldSum() {
+        let sum = 0;
+        let allFilled = true;
+        
+        skinfoldInputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (val && val > 0) {
+                sum += val;
+            } else {
+                allFilled = false;
+            }
+        });
+        
+        if (allFilled && sum > 0) {
+            skinfoldSumEl.value = sum.toFixed(1) + ' mm';
+        } else {
+            skinfoldSumEl.value = sum > 0 ? sum.toFixed(1) + ' mm (incomplete)' : '';
+        }
+    }
+    
+    skinfoldInputs.forEach(input => {
+        input.addEventListener('input', updateSkinfoldSum);
+    });
+    
+    // =========================================================
+    // SKINFOLDS CALCULATION BUTTON
+    // =========================================================
+    document.getElementById('calculate_skinfolds_btn').addEventListener('click', function() {
+        const data = {
+            chest: parseFloat(document.getElementById('skinfold_chest_mm').value) || 0,
+            abdomen: parseFloat(document.getElementById('skinfold_abdomen_mm').value) || 0,
+            thigh: parseFloat(document.getElementById('skinfold_thigh_mm').value) || 0,
+            triceps: parseFloat(document.getElementById('skinfold_triceps_mm').value) || 0,
+            subscapular: parseFloat(document.getElementById('skinfold_subscapular_mm').value) || 0,
+            suprailiac: parseFloat(document.getElementById('skinfold_suprailiac_mm').value) || 0,
+            midaxillary: parseFloat(document.getElementById('skinfold_midaxillary_mm').value) || 0,
+            age: patientData.age,
+            sex: patientData.sex,
+            weight_kg: patientData.weight_kg,
+            height_cm: patientData.height_cm
+        };
+        
+        fetch('/assessment/calculate-body-fat-skinfolds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                alert('Error: ' + result.error);
+                return;
+            }
+            
+            document.getElementById('result_body_fat').textContent = result.body_fat_pct + '%';
+            document.getElementById('result_bf_category').textContent = result.bf_category;
+            document.getElementById('result_lmi').textContent = result.lmi + ' kg/m²';
+            document.getElementById('result_lmi_category').textContent = result.lmi_category;
+            
+            const sarcopeniaEl = document.getElementById('result_sarcopenia');
+            sarcopeniaEl.textContent = result.sarcopenia_risk ? 'AT RISK' : 'Normal';
+            sarcopeniaEl.className = 'mb-1 ' + (result.sarcopenia_risk ? 'text-danger' : 'text-success');
+        })
+        .catch(err => alert('Calculation error: ' + err));
+    });
+    
+    // =========================================================
+    // NAVY METHOD CALCULATION BUTTON
+    // =========================================================
+    document.getElementById('calculate_navy_btn').addEventListener('click', function() {
+        const neckCm = parseFloat(document.getElementById('neck_circumference_cm').value);
+        
+        if (!neckCm) {
+            alert('Please enter neck circumference');
+            return;
+        }
+        
+        if (!patientData.waist_cm) {
+            alert('Waist circumference is required. Please enter it in Section 0.');
+            return;
+        }
+        
+        if (patientData.sex === 'female' && !patientData.hip_cm) {
+            alert('Hip circumference is required for females. Please enter it in Section 0.');
+            return;
+        }
+        
+        const data = {
+            height_cm: patientData.height_cm,
+            waist_cm: patientData.waist_cm,
+            neck_cm: neckCm,
+            hip_cm: patientData.hip_cm,
+            sex: patientData.sex,
+            age: patientData.age,
+            weight_kg: patientData.weight_kg
+        };
+        
+        fetch('/assessment/calculate-body-fat-navy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.error) {
+                alert('Error: ' + result.error);
+                return;
+            }
+            
+            document.getElementById('result_body_fat').textContent = result.body_fat_pct + '%';
+            document.getElementById('result_bf_category').textContent = result.bf_category;
+            document.getElementById('result_lmi').textContent = result.lmi + ' kg/m²';
+            document.getElementById('result_lmi_category').textContent = result.lmi_category;
+            
+            const sarcopeniaEl = document.getElementById('result_sarcopenia');
+            sarcopeniaEl.textContent = result.sarcopenia_risk ? 'AT RISK' : 'Normal';
+            sarcopeniaEl.className = 'mb-1 ' + (result.sarcopenia_risk ? 'text-danger' : 'text-success');
+        })
+        .catch(err => alert('Calculation error: ' + err));
+    });
+});
+</script>
+{% endblock %}

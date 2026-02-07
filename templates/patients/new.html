@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}New Patient | Jiyo100Saal FAS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-plus"></i> New Patient</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('patients.new_patient') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                            <div class="form-text">Patient must be 30-120 years old for assessment</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sex" class="form-label">Sex *</label>
+                            <select class="form-select" id="sex" name="sex" required>
+                                <option value="">-- Select --</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91-9876543210">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="patient@example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="external_id" class="form-label">Hospital ID / MRN</label>
+                            <input type="text" class="form-control" id="external_id" name="external_id" placeholder="Optional">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Create Patient
+                        </button>
+                        <a href="{{ url_for('patients.list_patients') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

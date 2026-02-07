@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Cancer Screening - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-clipboard2-check"></i> Cancer Screening (4 points)</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle"></i> Screening recommendations are based on age, sex, and smoking status. Check all completed screenings.
+            </div>
+
+            <form method="POST" id="screening-form">
+                <!-- Smoking Status (needed for LDCT) -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Smoking Status</strong></label>
+                    <select class="form-select" id="smoking-status" onchange="updateRecommendations()">
+                        <option value="never">Never smoked</option>
+                        <option value="former">Former smoker (quit &gt;15 years ago)</option>
+                        <option value="recent">Former smoker (quit within 15 years)</option>
+                        <option value="current">Current smoker</option>
+                    </select>
+                </div>
+
+                <hr>
+
+                <!-- Screening Checklist -->
+                <h5 class="mb-3">Recommended Screenings</h5>
+                
+                <div class="row g-3" id="screening-checklist">
+                    <!-- Colonoscopy -->
+                    <div class="col-md-6" id="card-colonoscopy">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="colonoscopy" name="colonoscopy"
+                                           {% if pillar5.screening_colonoscopy %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="colonoscopy">
+                                        <strong>Colonoscopy</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Age 45+ (every 10 years)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lung CT -->
+                    <div class="col-md-6" id="card-ldct" style="display: none;">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="ldct" name="ldct"
+                                           {% if pillar5.screening_ldct %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="ldct">
+                                        <strong>Low-Dose Chest CT (LDCT)</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Age 50-80, smokers (annually)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mammogram (Female) -->
+                    <div class="col-md-6" id="card-mammogram" style="display: none;">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mammogram" name="mammogram"
+                                           {% if pillar5.screening_mammogram %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="mammogram">
+                                        <strong>Mammogram</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Age 40+ (every 1-2 years)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pap/HPV (Female) -->
+                    <div class="col-md-6" id="card-pap-hpv" style="display: none;">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pap_hpv" name="pap_hpv"
+                                           {% if pillar5.screening_pap_hpv %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="pap_hpv">
+                                        <strong>Pap Smear / HPV Test</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Age 21-65 (every 3-5 years)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PSA (Male) -->
+                    <div class="col-md-6" id="card-psa" style="display: none;">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="psa" name="psa"
+                                           {% if pillar5.screening_psa %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="psa">
+                                        <strong>PSA (Prostate)</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Age 55-69 (discuss with doctor)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skin Exam -->
+                    <div class="col-md-6" id="card-skin">
+                        <div class="card screening-card" style="border-left: 4px solid #16a085;">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="skin" name="skin"
+                                           {% if pillar5.screening_skin %}checked{% endif %}
+                                           onchange="calculateCompliance()">
+                                    <label class="form-check-label" for="skin">
+                                        <strong>Skin Cancer Screening</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">All ages (annually if high risk)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compliance Display -->
+                <div class="alert alert-success mt-4">
+                    <h5><i class="bi bi-graph-up"></i> Screening Compliance</h5>
+                    <p class="mb-1">
+                        <strong>Completed:</strong> <span id="completed-count">0</span> / <span id="recommended-count">0</span>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Compliance Rate:</strong> <span id="compliance-pct" style="font-size: 1.5rem; font-weight: bold;">0%</span>
+                    </p>
+                </div>
+                
+                <!-- None Completed Option -->
+                <div style="margin-top: 20px; padding: 15px; background: #fee; border-radius: 8px; border: 2px solid #fcc;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="none_completed" name="none_completed" 
+                               style="width: 20px; height: 20px; cursor: pointer;"
+                               onchange="handleNoneCompleted()">
+                        <span style="margin-left: 10px; font-weight: 600; color: #c00;">
+                            I have not completed any of these screenings
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Hidden fields for submission -->
+                <input type="hidden" name="recommended_count" id="recommended_count_input">
+                <input type="hidden" name="completed_count" id="completed_count_input">
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Patient data
+const PATIENT_AGE = {{ patient_age }};
+const PATIENT_SEX = "{{ patient.sex }}";
+
+// Update screening recommendations based on age, sex, smoking
+function updateRecommendations() {
+    const age = PATIENT_AGE;
+    const sex = PATIENT_SEX;
+    const smoking = document.getElementById('smoking-status').value;
+    
+    // Determine which screenings are recommended (per user specifications)
+    const recs = {
+        colonoscopy: age >= 45 && age <= 75,  // Age 45-75, both sexes
+        ldct: (smoking === 'current' || smoking === 'recent') && age >= 50 && age <= 80,  // Age 50-80, smokers only
+        psa: sex === 'male' && age >= 40,  // Age 40+, males ONLY
+        pap_hpv: sex === 'female' && age >= 21 && age <= 65,  // Age 21-65, females ONLY
+        mammogram: sex === 'female' && age >= 40 && age <= 70,  // Age 40-70, females ONLY
+        skin: true  // All ages, both sexes
+    };
+    
+    // Show/hide screening cards
+    Object.keys(recs).forEach(key => {
+        const card = document.getElementById('card-' + key);
+        if (card) {
+            card.style.display = recs[key] ? 'block' : 'none';
+            
+            // If not recommended, uncheck it
+            if (!recs[key]) {
+                const checkbox = document.getElementById(key);
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+            }
+        }
+    });
+    
+    // Calculate compliance
+    calculateCompliance();
+}
+
+// Calculate compliance percentage
+function calculateCompliance() {
+    const age = PATIENT_AGE;
+    const sex = PATIENT_SEX;
+    const smoking = document.getElementById('smoking-status').value;
+    
+    // Recommended screenings (same criteria as above)
+    const recs = {
+        colonoscopy: age >= 45 && age <= 75,
+        ldct: (smoking === 'current' || smoking === 'recent') && age >= 50 && age <= 80,
+        psa: sex === 'male' && age >= 40,
+        pap_hpv: sex === 'female' && age >= 21 && age <= 65,
+        mammogram: sex === 'female' && age >= 40 && age <= 70,
+        skin: true
+    };
+    
+    // Count recommended
+    const recommendedCount = Object.values(recs).filter(v => v).length;
+    
+    // Count completed
+    let completedCount = 0;
+    Object.keys(recs).forEach(key => {
+        if (recs[key]) {
+            const checkbox = document.getElementById(key);
+            if (checkbox && checkbox.checked) {
+                completedCount++;
+            }
+        }
+    });
+    
+    // Calculate percentage
+    const compliancePct = recommendedCount > 0 ? (completedCount / recommendedCount) * 100 : 0;
+    
+    // Update display
+    document.getElementById('recommended-count').textContent = recommendedCount;
+    document.getElementById('completed-count').textContent = completedCount;
+    document.getElementById('compliance-pct').textContent = compliancePct.toFixed(0) + '%';
+    
+    // Update hidden inputs for form submission
+    document.getElementById('recommended_count_input').value = recommendedCount;
+    document.getElementById('completed_count_input').value = completedCount;
+}
+
+// Handle "None Completed" checkbox
+function handleNoneCompleted() {
+    const noneCheckbox = document.getElementById('none_completed');
+    
+    if (noneCheckbox.checked) {
+        // Uncheck all screening checkboxes
+        const allScreenings = document.querySelectorAll('#screening-checklist input[type="checkbox"]');
+        allScreenings.forEach(cb => cb.checked = false);
+    }
+    
+    calculateCompliance();
+}
+
+// Initialize on load
+window.onload = function() {
+    updateRecommendations();
+    
+    // Add event listeners to all screening checkboxes to uncheck "none" when they're checked
+    document.querySelectorAll('#screening-checklist input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('none_completed').checked = false;
+            }
+        });
+    });
+};
+</script>
+
+<style>
+.screening-card {
+    transition: all 0.3s ease;
+}
+.screening-card:hover {
+    box-shadow: 0 2px 8px rgba(22, 160, 133, 0.2);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Exercise | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+    .checkbox-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .checkbox-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .checkbox-card input[type="checkbox"]:checked + .checkbox-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-bicycle"></i> Test 6: Exercise Habits (2 points)</h3>
+            <p class="mb-0">Frequency + Types</p>
+        </div>
+    </div>
+    
+    <form method="POST">
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Exercise Frequency (1 point)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">How many days per week do you engage in structured exercise?</p>
+                <div class="radio-card">
+                    <input type="radio" name="exercise_frequency" value="6-7" id="freq_67" {{ 'checked' if pillar4.exercise_frequency == '6-7' else '' }}>
+                    <label for="freq_67" class="radio-label d-block"><strong>6-7 days/week</strong> - Excellent consistency</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="exercise_frequency" value="4-5" id="freq_45" {{ 'checked' if pillar4.exercise_frequency == '4-5' else '' }}>
+                    <label for="freq_45" class="radio-label d-block"><strong>4-5 days/week</strong> - Good routine</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="exercise_frequency" value="2-3" id="freq_23" {{ 'checked' if pillar4.exercise_frequency == '2-3' else '' }}>
+                    <label for="freq_23" class="radio-label d-block"><strong>2-3 days/week</strong> - Fair activity</label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="exercise_frequency" value="0-1" id="freq_01" {{ 'checked' if pillar4.exercise_frequency == '0-1' else '' }}>
+                    <label for="freq_01" class="radio-label d-block"><strong>0-1 days/week</strong> - Sedentary</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Exercise Types (1 point)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Select all types you regularly include:</p>
+                <div class="checkbox-card">
+                    <input type="checkbox" name="exercise_cardio" id="cardio" {{ 'checked' if pillar4.exercise_cardio else '' }}>
+                    <label for="cardio" class="checkbox-label d-block">
+                        <strong>Cardio/Aerobic</strong><br>
+                        <small>Running, cycling, swimming, brisk walking</small>
+                    </label>
+                </div>
+                <div class="checkbox-card">
+                    <input type="checkbox" name="exercise_strength" id="strength" {{ 'checked' if pillar4.exercise_strength else '' }}>
+                    <label for="strength" class="checkbox-label d-block">
+                        <strong>Strength/Resistance Training</strong><br>
+                        <small>Weights, resistance bands, bodyweight exercises</small>
+                    </label>
+                </div>
+                <div class="checkbox-card">
+                    <input type="checkbox" name="exercise_flexibility" id="flexibility" {{ 'checked' if pillar4.exercise_flexibility else '' }}>
+                    <label for="flexibility" class="checkbox-label d-block">
+                        <strong>Flexibility/Balance</strong><br>
+                        <small>Yoga, Pilates, stretching, tai chi</small>
+                    </label>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <strong>Best Practice:</strong> All 3 types = 1.0 pt | 2 types = 0.75 pt | 1 type = 0.5 pt
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

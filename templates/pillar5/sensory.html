@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Sensory Health - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-eye"></i> Sensory Health (1 point)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Vision -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Vision Status (0.5 pts)</strong></label>
+                    <select class="form-select" name="vision_status" required>
+                        <option value="">Select...</option>
+                        <option value="excellent" {% if pillar5.vision_status == 'excellent' %}selected{% endif %}>Excellent (20/20 or better)</option>
+                        <option value="good" {% if pillar5.vision_status == 'good' %}selected{% endif %}>Good (20/30 with correction)</option>
+                        <option value="fair" {% if pillar5.vision_status == 'fair' %}selected{% endif %}>Fair (20/40-20/60)</option>
+                        <option value="poor" {% if pillar5.vision_status == 'poor' %}selected{% endif %}>Poor (worse than 20/60)</option>
+                    </select>
+                </div>
+
+                <!-- Hearing -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Hearing Status (0.5 pts)</strong></label>
+                    <select class="form-select" name="hearing_status" required>
+                        <option value="">Select...</option>
+                        <option value="excellent" {% if pillar5.hearing_status == 'excellent' %}selected{% endif %}>Excellent (no difficulty)</option>
+                        <option value="good" {% if pillar5.hearing_status == 'good' %}selected{% endif %}>Good (minimal difficulty)</option>
+                        <option value="fair" {% if pillar5.hearing_status == 'fair' %}selected{% endif %}>Fair (moderate difficulty)</option>
+                        <option value="poor" {% if pillar5.hearing_status == 'poor' %}selected{% endif %}>Poor (significant difficulty)</option>
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

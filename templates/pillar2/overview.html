@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Pillar 2: Cognitive Function - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-gender-{{ 'male' if patient.sex == 'male' else 'female' }}"></i> 
+                {{ patient.sex|capitalize }}
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('assessments.view_assessment', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Assessment
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Indicator -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold" style="color: #7c3aed;"><i class="bi bi-brain"></i> Pillar 2: Cognitive Function (20 points)</span>
+        <span class="text-muted">{{ completed_count }}/7 Test Groups Complete</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" role="progressbar" style="width: {{ (completed_count / 7 * 100)|int }}%; background-color: #7c3aed;" 
+             aria-valuenow="{{ completed_count }}" aria-valuemin="0" aria-valuemax="7"></div>
+    </div>
+</div>
+
+{% if pillar2 and pillar2.pillar2_total %}
+<!-- Total Score Card -->
+<div class="card text-white mb-4" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="card-title mb-1"><i class="bi bi-brain"></i> Total Pillar 2 Score</h5>
+                <p class="card-text opacity-75 mb-0">{{ pillar2.pillar2_category or 'Calculate to see category' }}</p>
+                {% if pillar2.functional_age_modifier %}
+                <small class="opacity-75">
+                    Functional Age Impact: {{ '+' if pillar2.functional_age_modifier > 0 else '' }}{{ pillar2.functional_age_modifier }} years
+                </small>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="display-4 fw-bold">{{ pillar2.pillar2_total }}/20</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Clinical Alerts -->
+{% if pillar2 and pillar2.clinical_alerts %}
+<div class="alert alert-warning mb-4">
+    <h6><i class="bi bi-exclamation-triangle-fill"></i> Clinical Alerts</h6>
+    <ul class="mb-0">
+        {% for alert in pillar2.clinical_alerts %}
+        <li class="{% if alert.level == 'urgent' %}text-danger fw-bold{% endif %}">{{ alert.message }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Tests Grid -->
+<div class="row g-4">
+    
+    <!-- Test 1&2: Memory -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.memory %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-1-circle-fill me-2" style="color: #7c3aed;"></i>Word Recall Memory</span>
+                {% if tests_complete.memory %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Immediate + Delayed Recall • 4 points max</p>
+                {% if pillar2 and pillar2.memory_immediate_count is not none %}
+                <div class="mb-2">
+                    <small class="text-muted">Immediate:</small> 
+                    <span class="fw-bold" style="color: #7c3aed;">{{ pillar2.memory_immediate_count }}/10</span>
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.memory_immediate_points }} pts</span>
+                </div>
+                {% endif %}
+                {% if pillar2 and pillar2.memory_delayed_count is not none %}
+                <div class="mb-2">
+                    <small class="text-muted">Delayed:</small> 
+                    <span class="fw-bold" style="color: #7c3aed;">{{ pillar2.memory_delayed_count }}/10</span>
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.memory_delayed_points }} pts</span>
+                    {% if pillar2.memory_retention_flag %}<span class="badge bg-danger ms-1">⚠️ Low Retention</span>{% endif %}
+                </div>
+                {% if pillar2.memory_retention_pct %}
+                <small class="text-muted">Retention: {{ pillar2.memory_retention_pct }}%</small>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.memory', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.memory %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 3&4: Digit Span -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.digit_span %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-2-circle-fill me-2" style="color: #7c3aed;"></i>Digit Span</span>
+                {% if tests_complete.digit_span %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Forward + Backward • 2 points max</p>
+                {% if pillar2 and pillar2.digit_span_forward is not none %}
+                <h3 class="mb-1" style="color: #7c3aed;">F:{{ pillar2.digit_span_forward }} B:{{ pillar2.digit_span_backward }}</h3>
+                <p class="mb-0">
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.digit_span_points or 0 }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar2.digit_span_category }}</span>
+                    {% if pillar2.memory_deficit_flag %}<span class="badge bg-warning text-dark ms-2">⚠️ Memory</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.digit_span', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.digit_span %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 5&6: Trail Making -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.trails %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-3-circle-fill me-2" style="color: #7c3aed;"></i>Trail Making A & B</span>
+                {% if tests_complete.trails %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Processing Speed & Executive Function • 6 points max</p>
+                {% if pillar2 and pillar2.trails_a_time is not none %}
+                <h3 class="mb-1" style="color: #7c3aed;">A: {{ pillar2.trails_a_time }}s | B: {{ pillar2.trails_b_time }}s</h3>
+                <p class="mb-0">
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.trails_total_points or 0 }} pts</span>
+                    <span class="text-muted ms-2">B/A: {{ pillar2.trails_ba_ratio or 'N/A' }}</span>
+                    {% if pillar2.executive_dysfunction_flag %}<span class="badge bg-danger ms-2">⚠️ Executive</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.trails', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.trails %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 7: DSST -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.dsst %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-4-circle-fill me-2" style="color: #7c3aed;"></i>DSST - Symbol Substitution</span>
+                {% if tests_complete.dsst %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Processing Speed • 3 points max</p>
+                {% if pillar2 and pillar2.dsst_score is not none %}
+                <h3 class="mb-1" style="color: #7c3aed;">{{ pillar2.dsst_score }} correct</h3>
+                <p class="mb-0">
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.dsst_points }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar2.dsst_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.dsst', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.dsst %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 8: Clock Drawing -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.clock %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-5-circle-fill me-2" style="color: #7c3aed;"></i>Clock Drawing</span>
+                {% if tests_complete.clock %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Visuospatial & Executive • 2 points max</p>
+                {% if pillar2 and pillar2.clock_score_raw is not none %}
+                <h3 class="mb-1" style="color: #7c3aed;">{{ pillar2.clock_score_raw }}/7 components</h3>
+                <p class="mb-0">
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.clock_points }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar2.clock_category }}</span>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.clock_drawing', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.clock %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 9: Verbal Fluency -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.verbal_fluency %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-6-circle-fill me-2" style="color: #7c3aed;"></i>Verbal Fluency - Animals</span>
+                {% if tests_complete.verbal_fluency %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Language & Semantic Memory • 2 points max</p>
+                {% if pillar2 and pillar2.verbal_fluency_animals is not none %}
+                <h3 class="mb-1" style="color: #7c3aed;">{{ pillar2.verbal_fluency_animals }} animals</h3>
+                <p class="mb-0">
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.verbal_fluency_points }} pts</span>
+                    <span class="text-muted ms-2">{{ pillar2.verbal_fluency_category }}</span>
+                    {% if pillar2.language_concern_flag %}<span class="badge bg-warning text-dark ms-2">⚠️ Language</span>{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.verbal_fluency', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.verbal_fluency %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test 10&11: Mental Health -->
+    <div class="col-md-6">
+        <div class="card h-100 {% if tests_complete.mental_health %}border-success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom-color: #7c3aed;">
+                <span><i class="bi bi-7-circle-fill me-2" style="color: #7c3aed;"></i>Mental Health Screening</span>
+                {% if tests_complete.mental_health %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">PHQ-2 + GAD-2 • 2 points max</p>
+                {% if pillar2 and pillar2.phq2_total is not none %}
+                <div class="mb-1">
+                    <small class="text-muted">PHQ-2:</small> 
+                    <span class="fw-bold">{{ pillar2.phq2_total }}/6</span>
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.phq2_points }} pt</span>
+                    <span class="text-muted">{{ pillar2.phq2_category }}</span>
+                    {% if pillar2.phq2_urgent_flag %}<span class="badge bg-danger">⚠️ URGENT</span>{% endif %}
+                    {% if pillar2.phq2_followup_flag and not pillar2.phq2_urgent_flag %}<span class="badge bg-warning text-dark">Follow-up</span>{% endif %}
+                </div>
+                {% endif %}
+                {% if pillar2 and pillar2.gad2_total is not none %}
+                <div>
+                    <small class="text-muted">GAD-2:</small> 
+                    <span class="fw-bold">{{ pillar2.gad2_total }}/6</span>
+                    <span class="badge" style="background-color: #7c3aed;">{{ pillar2.gad2_points }} pt</span>
+                    <span class="text-muted">{{ pillar2.gad2_category }}</span>
+                    {% if pillar2.gad2_urgent_flag %}<span class="badge bg-danger">⚠️ URGENT</span>{% endif %}
+                    {% if pillar2.gad2_followup_flag and not pillar2.gad2_urgent_flag %}<span class="badge bg-warning text-dark">Follow-up</span>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('pillar2.mental_health', assessment_id=assessment.id) }}" class="btn w-100" style="background-color: #7c3aed; color: white;">
+                    {% if tests_complete.mental_health %}<i class="bi bi-pencil"></i> Edit{% else %}<i class="bi bi-play-fill"></i> Start Test{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Score Breakdown -->
+{% if pillar2 %}
+<div class="card mt-4" style="border-color: #7c3aed;">
+    <div class="card-header" style="background-color: #f3e8ff; border-bottom-color: #7c3aed;">
+        <h6 class="mb-0" style="color: #7c3aed;"><i class="bi bi-calculator"></i> Score Breakdown (20 points total)</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><td>Immediate Memory</td><td class="text-end">{{ pillar2.memory_immediate_points or '—' }}/2.0</td></tr>
+                    <tr><td>Delayed Memory</td><td class="text-end">{{ pillar2.memory_delayed_points or '—' }}/2.0</td></tr>
+                    <tr><td>Digit Span Forward</td><td class="text-end">{{ pillar2.digit_span_forward_points or '—' }}/1.0</td></tr>
+                    <tr><td>Digit Span Backward</td><td class="text-end">{{ pillar2.digit_span_backward_points or '—' }}/1.0</td></tr>
+                    <tr><td>Trail Making A</td><td class="text-end">{{ pillar2.trails_a_points or '—' }}/3.0</td></tr>
+                    <tr><td>Trail Making B</td><td class="text-end">{{ pillar2.trails_b_points or '—' }}/3.0</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><td>DSST</td><td class="text-end">{{ pillar2.dsst_points or '—' }}/3.0</td></tr>
+                    <tr><td>Clock Drawing</td><td class="text-end">{{ pillar2.clock_points or '—' }}/2.0</td></tr>
+                    <tr><td>Verbal Fluency</td><td class="text-end">{{ pillar2.verbal_fluency_points or '—' }}/2.0</td></tr>
+                    <tr><td>PHQ-2 (Depression)</td><td class="text-end">{{ pillar2.phq2_points or '—' }}/1.0</td></tr>
+                    <tr><td>GAD-2 (Anxiety)</td><td class="text-end">{{ pillar2.gad2_points or '—' }}/1.0</td></tr>
+                    <tr class="fw-bold" style="border-top: 2px solid #7c3aed;"><td>TOTAL</td><td class="text-end">{{ pillar2.pillar2_total or '0' }}/20.0</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Action Buttons -->
+{% if completed_count > 0 %}
+<div class="sticky-save-bar mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted">{{ completed_count }}/7 test groups completed</span>
+        <div>
+            <button onclick="calculateTotal()" class="btn btn-success btn-lg me-2">
+                <i class="bi bi-calculator"></i> Calculate Total Score
+            </button>
+            <a href="{{ url_for('reports.generate_report', assessment_id=assessment.id) }}" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-file-pdf"></i> Generate Report
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function calculateTotal() {
+    fetch('{{ url_for("pillar2.calculate_total", assessment_id=assessment.id) }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            let message = `Total Score: ${data.total.total_score}/20 (${data.total.category})\n`;
+            message += `Functional Age Impact: ${data.age_impact.interpretation}\n`;
+            
+            if (data.alerts && data.alerts.length > 0) {
+                message += '\n⚠️ CLINICAL ALERTS:\n';
+                data.alerts.forEach(alert => {
+                    message += `- ${alert.message}\n`;
+                });
+            }
+            alert(message);
+            location.reload();
+        }
+    })
+    .catch(error => alert('Error calculating total: ' + error));
+}
+</script>
+{% endblock %}

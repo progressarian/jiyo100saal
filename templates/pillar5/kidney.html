@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Kidney Function - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-droplet"></i> Kidney Function (2 points)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Input Mode Toggle -->
+                <div class="mb-4">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-success" id="btn-exact" onclick="switchMode('exact')">
+                            Exact Lab Values
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="btn-category" onclick="switchMode('category')">
+                            Category Selection
+                        </button>
+                    </div>
+                    <input type="hidden" name="input_mode" id="input_mode" value="{{ pillar5.kidney_input_mode if pillar5.kidney_input_mode else 'exact' }}">
+                </div>
+
+                <!-- Exact Mode -->
+                <div id="exact-mode" style="display: none;">
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Serum Creatinine</strong></label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" id="creatinine" name="creatinine" 
+                                   value="{{ pillar5.creatinine if pillar5.creatinine else '' }}"
+                                   oninput="calculateEGFR()">
+                            <span class="input-group-text">mg/dL</span>
+                        </div>
+                        <small class="text-muted">Normal range: 0.6-1.2 mg/dL</small>
+                    </div>
+
+                    <!-- eGFR Display -->
+                    <div class="alert alert-info" id="egfr-display" style="display: none;">
+                        <h5><i class="bi bi-calculator"></i> Calculated eGFR (CKD-EPI 2021)</h5>
+                        <p class="mb-1"><strong>eGFR:</strong> <span id="egfr-value">-</span> mL/min/1.73m²</p>
+                        <p class="mb-0"><strong>Category:</strong> <span id="kidney-category">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Category Mode -->
+                <div id="category-mode" style="display: none;">
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Select Kidney Function Category</strong></label>
+                        <select class="form-select" name="kidney_category">
+                            <option value="">Select category...</option>
+                            <option value="normal" {% if pillar5.kidney_category_input == 'normal' %}selected{% endif %}>
+                                Normal (eGFR ≥90)
+                            </option>
+                            <option value="mildDecrease" {% if pillar5.kidney_category_input == 'mildDecrease' %}selected{% endif %}>
+                                Mild Decrease (eGFR 60-89)
+                            </option>
+                            <option value="moderateDecrease" {% if pillar5.kidney_category_input == 'moderateDecrease' %}selected{% endif %}>
+                                Moderate Decrease (eGFR 30-59)
+                            </option>
+                            <option value="severeDecrease" {% if pillar5.kidney_category_input == 'severeDecrease' %}selected{% endif %}>
+                                Severe Decrease (eGFR 15-29)
+                            </option>
+                            <option value="kidneyFailure" {% if pillar5.kidney_category_input == 'kidneyFailure' %}selected{% endif %}>
+                                Kidney Failure (eGFR &lt;15)
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Patient data from template
+const PATIENT_AGE = {{ patient_age }};
+const PATIENT_SEX = "{{ patient.sex }}";
+
+// Mode switching
+function switchMode(mode) {
+    document.getElementById('input_mode').value = mode;
+    
+    if (mode === 'exact') {
+        document.getElementById('exact-mode').style.display = 'block';
+        document.getElementById('category-mode').style.display = 'none';
+        document.getElementById('btn-exact').classList.add('active');
+        document.getElementById('btn-category').classList.remove('active');
+    } else {
+        document.getElementById('exact-mode').style.display = 'none';
+        document.getElementById('category-mode').style.display = 'block';
+        document.getElementById('btn-exact').classList.remove('active');
+        document.getElementById('btn-category').classList.add('active');
+    }
+}
+
+// Calculate eGFR using CKD-EPI 2021 (race-free)
+function calculateEGFR() {
+    const creatinine = parseFloat(document.getElementById('creatinine').value);
+    
+    if (!creatinine || creatinine <= 0) {
+        document.getElementById('egfr-display').style.display = 'none';
+        return;
+    }
+    
+    const age = PATIENT_AGE;
+    const sex = PATIENT_SEX;
+    
+    let kappa, alpha;
+    if (sex === 'female') {
+        kappa = 0.7;
+        alpha = -0.241;
+    } else {
+        kappa = 0.9;
+        alpha = -0.302;
+    }
+    
+    let egfr;
+    if (creatinine <= kappa) {
+        egfr = 142 * Math.pow(creatinine / kappa, alpha) * Math.pow(0.9938, age);
+    } else {
+        egfr = 142 * Math.pow(creatinine / kappa, -1.200) * Math.pow(0.9938, age);
+    }
+    
+    // Display result
+    document.getElementById('egfr-value').textContent = egfr.toFixed(1);
+    
+    // Categorize
+    let category;
+    if (egfr >= 90) {
+        category = 'Normal';
+    } else if (egfr >= 60) {
+        category = 'Mild decrease (CKD Stage 2)';
+    } else if (egfr >= 45) {
+        category = 'CKD Stage 3a (Moderate)';
+    } else if (egfr >= 30) {
+        category = 'CKD Stage 3b (Moderate-Severe)';
+    } else if (egfr >= 15) {
+        category = 'CKD Stage 4 (Severe)';
+    } else {
+        category = 'CKD Stage 5 (Kidney Failure)';
+    }
+    
+    document.getElementById('kidney-category').textContent = category;
+    document.getElementById('egfr-display').style.display = 'block';
+}
+
+// Initialize on load
+window.onload = function() {
+    const currentMode = document.getElementById('input_mode').value || 'exact';
+    switchMode(currentMode);
+    
+    // If creatinine already entered, calculate eGFR
+    const creatinine = document.getElementById('creatinine').value;
+    if (creatinine) {
+        calculateEGFR();
+    }
+};
+</script>
+{% endblock %}

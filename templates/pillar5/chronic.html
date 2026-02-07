@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Chronic Disease - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-prescription2"></i> Chronic Disease Management (1 point)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Has Chronic Disease -->
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="has_chronic_disease" name="has_chronic_disease"
+                               {% if pillar5.has_chronic_disease %}checked{% endif %}
+                               onchange="toggleDiseaseFields()">
+                        <label class="form-check-label" for="has_chronic_disease">
+                            <strong>I have one or more chronic diseases</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Disease Fields -->
+                <div id="disease-fields" style="display: {% if pillar5.has_chronic_disease %}block{% else %}none{% endif %};">
+                    <!-- Disease List -->
+                    <div class="mb-4">
+                        <label class="form-label"><strong>List of Chronic Diseases</strong></label>
+                        <input type="text" class="form-control" name="chronic_disease_list" 
+                               value="{{ pillar5.chronic_disease_list if pillar5.chronic_disease_list else '' }}"
+                               placeholder="e.g., Diabetes, Hypertension, Asthma">
+                        <small class="text-muted">Separate multiple diseases with commas</small>
+                    </div>
+
+                    <!-- Management Quality -->
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Disease Management Quality</strong></label>
+                        <select class="form-select" name="disease_management">
+                            <option value="">Select...</option>
+                            <option value="excellent" {% if pillar5.disease_management == 'excellent' %}selected{% endif %}>Excellent (all targets met, controlled)</option>
+                            <option value="good" {% if pillar5.disease_management == 'good' %}selected{% endif %}>Good (most targets met)</option>
+                            <option value="fair" {% if pillar5.disease_management == 'fair' %}selected{% endif %}>Fair (some targets missed)</option>
+                            <option value="poor" {% if pillar5.disease_management == 'poor' %}selected{% endif %}>Poor (poorly controlled)</option>
+                            <option value="none" {% if pillar5.disease_management == 'none' %}selected{% endif %}>Not managed/No treatment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> This is the final test in Pillar 5! Clicking Save will calculate your total score.
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-check-lg"></i> Save & Calculate Total
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDiseaseFields() {
+    const hasDisease = document.getElementById('has_chronic_disease').checked;
+    document.getElementById('disease-fields').style.display = hasDisease ? 'block' : 'none';
+}
+</script>
+{% endblock %}

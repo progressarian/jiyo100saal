@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Glucose Metabolism - Pillar 3{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --pillar3-primary: #2c3e50;
+        --pillar3-accent: #3498db;
+    }
+    
+    .test-header {
+        background: linear-gradient(135deg, var(--pillar3-primary) 0%, var(--pillar3-accent) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .input-mode-toggle {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .mode-btn {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid var(--pillar3-accent);
+        background: white;
+        color: var(--pillar3-accent);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mode-btn.active {
+        background: var(--pillar3-accent);
+        color: white;
+    }
+    
+    .mode-btn:hover:not(.active) {
+        background: rgba(52, 152, 219, 0.1);
+    }
+    
+    .input-section {
+        display: none;
+    }
+    
+    .input-section.active {
+        display: block;
+    }
+    
+    .radio-card {
+        border: 2px solid #dfe6e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .radio-card:hover {
+        border-color: var(--pillar3-accent);
+        background: rgba(52, 152, 219, 0.05);
+    }
+    
+    .radio-card input[type="radio"]:checked + .radio-label {
+        color: var(--pillar3-accent);
+        font-weight: 600;
+    }
+    
+    .radio-card input[type="radio"]:checked ~ * {
+        border-left-color: var(--pillar3-accent);
+    }
+    
+    .threshold-indicator {
+        background: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .threshold-indicator.optimal { border-left-color: #27ae60; }
+    .threshold-indicator.borderline { border-left-color: #f39c12; }
+    .threshold-indicator.prediabetic { border-left-color: #e67e22; }
+    .threshold-indicator.diabetic { border-left-color: #e74c3c; }
+    
+    .btn-pillar3 {
+        background: var(--pillar3-accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-pillar3:hover {
+        background: var(--pillar3-primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="test-header">
+        <h2>Test 1: Glucose Metabolism & Energy</h2>
+        <p class="mb-0">Maximum 5 points (Blood glucose: 3 pts + Functional energy: 2 pts)</p>
+    </div>
+
+    <form method="POST" id="glucoseForm">
+        <!-- Part A: Blood Glucose Control (3 pts) -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h4 class="mb-0">Part A: Blood Glucose Control (3 points)</h4>
+            </div>
+            <div class="card-body">
+                <!-- Input Mode Toggle -->
+                <div class="input-mode-toggle">
+                    <button type="button" class="mode-btn active" data-mode="exact">
+                        📊 Enter Exact Lab Values
+                    </button>
+                    <button type="button" class="mode-btn" data-mode="category">
+                        📋 Select Category
+                    </button>
+                </div>
+
+                <input type="hidden" name="input_mode" id="inputMode" value="exact">
+
+                <!-- Exact Values Mode -->
+                <div class="input-section active" id="exactMode">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>Fasting Glucose (mg/dL)</strong></label>
+                            <input type="number" step="0.1" class="form-control form-control-lg" 
+                                   name="fasting_glucose" id="fastingGlucose"
+                                   value="{{ pillar3.fasting_glucose if pillar3 else '' }}">
+                            <div class="threshold-indicator mt-2" id="glucoseThreshold">
+                                <strong>Thresholds:</strong><br>
+                                <span class="text-success">Optimal: &lt;100</span> |
+                                <span class="text-warning">Borderline: 100-109</span> |
+                                <span class="text-danger">Pre-diabetic: 110-125</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><strong>HbA1c (%)</strong></label>
+                            <input type="number" step="0.01" class="form-control form-control-lg" 
+                                   name="hba1c" id="hba1c"
+                                   value="{{ pillar3.hba1c if pillar3 else '' }}">
+                            <div class="threshold-indicator mt-2">
+                                <strong>Thresholds:</strong><br>
+                                <span class="text-success">Optimal: &lt;5.7%</span> |
+                                <span class="text-warning">Borderline: 5.7-6.0%</span> |
+                                <span class="text-danger">Pre-diabetic: 6.1-6.4%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Mode -->
+                <div class="input-section" id="categoryMode">
+                    <label class="form-label"><strong>Select Your Glucose Control Category:</strong></label>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="glucose_category" value="optimal" id="opt" 
+                               {% if pillar3 and pillar3.glucose_category == 'optimal' %}checked{% endif %}>
+                        <label class="radio-label ms-2" for="opt">
+                            <strong>Optimal</strong> - Fasting &lt;100 mg/dL, HbA1c &lt;5.7%
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="glucose_category" value="borderline" id="border"
+                               {% if pillar3 and pillar3.glucose_category == 'borderline' %}checked{% endif %}>
+                        <label class="radio-label ms-2" for="border">
+                            <strong>Borderline</strong> - Fasting 100-109 mg/dL, HbA1c 5.7-6.0%
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="glucose_category" value="prediabetic" id="prediab"
+                               {% if pillar3 and pillar3.glucose_category == 'prediabetic' %}checked{% endif %}>
+                        <label class="radio-label ms-2" for="prediab">
+                            <strong>Pre-diabetic</strong> - Fasting 110-125 mg/dL, HbA1c 6.1-6.4%
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="glucose_category" value="diabetic_controlled" id="diabctl"
+                               {% if pillar3 and pillar3.glucose_category == 'diabetic_controlled' %}checked{% endif %}>
+                        <label class="radio-label ms-2" for="diabctl">
+                            <strong>Diabetic - Controlled</strong> - Fasting 126-150 mg/dL, HbA1c 6.5-7.5%
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="glucose_category" value="diabetic_poor" id="diabpoor"
+                               {% if pillar3 and pillar3.glucose_category == 'diabetic_poor' %}checked{% endif %}>
+                        <label class="radio-label ms-2" for="diabpoor">
+                            <strong>Diabetic - Poor Control</strong> - Fasting &gt;150 mg/dL, HbA1c &gt;7.5%
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Part B: Functional Energy (2 pts) -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h4 class="mb-0">Part B: Functional Energy (2 points)</h4>
+            </div>
+            <div class="card-body">
+                <!-- Post-meal feeling -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>How do you typically feel 1-2 hours after a meal?</strong></label>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="post_meal_feeling" value="energized" id="energy1"
+                               {% if pillar3 and pillar3.post_meal_feeling == 'energized' %}checked{% endif %} required>
+                        <label for="energy1" class="radio-label ms-2">
+                            <strong>Energized and alert</strong> - Feel good, ready to continue activities
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="post_meal_feeling" value="comfortable" id="energy2"
+                               {% if pillar3 and pillar3.post_meal_feeling == 'comfortable' %}checked{% endif %}>
+                        <label for="energy2" class="radio-label ms-2">
+                            <strong>Comfortable, no issues</strong> - Normal, satisfied
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="post_meal_feeling" value="tired" id="energy3"
+                               {% if pillar3 and pillar3.post_meal_feeling == 'tired' %}checked{% endif %}>
+                        <label for="energy3" class="radio-label ms-2">
+                            <strong>Somewhat tired or sluggish</strong> - Energy dips slightly
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="post_meal_feeling" value="coma" id="energy4"
+                               {% if pillar3 and pillar3.post_meal_feeling == 'coma' %}checked{% endif %}>
+                        <label for="energy4" class="radio-label ms-2">
+                            <strong>Very tired, need to nap</strong> - "Food coma", crash
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fasting tolerance -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Can you comfortably skip breakfast or fast for 12-14 hours?</strong></label>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="fasting_tolerance" value="fine" id="fast1"
+                               {% if pillar3 and pillar3.fasting_tolerance == 'fine' %}checked{% endif %} required>
+                        <label for="fast1" class="radio-label ms-2">
+                            <strong>Yes, feel fine</strong> - No issues fasting
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="fasting_tolerance" value="hungry" id="fast2"
+                               {% if pillar3 and pillar3.fasting_tolerance == 'hungry' %}checked{% endif %}>
+                        <label for="fast2" class="radio-label ms-2">
+                            <strong>Yes, but feel hungry</strong> - Manageable discomfort
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="fasting_tolerance" value="difficult" id="fast3"
+                               {% if pillar3 and pillar3.fasting_tolerance == 'difficult' %}checked{% endif %}>
+                        <label for="fast3" class="radio-label ms-2">
+                            <strong>Difficult</strong> - Feel shaky, irritable, lightheaded
+                        </label>
+                    </div>
+                    
+                    <div class="radio-card">
+                        <input type="radio" name="fasting_tolerance" value="cannot" id="fast4"
+                               {% if pillar3 and pillar3.fasting_tolerance == 'cannot' %}checked{% endif %}>
+                        <label for="fast4" class="radio-label ms-2">
+                            <strong>Cannot fast</strong> - Must eat frequently to feel okay
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('pillar3.overview', assessment_id=assessment.id) }}" 
+               class="btn btn-secondary btn-lg">
+                ← Back
+            </a>
+            <button type="submit" class="btn btn-pillar3 btn-lg">
+                Save & Continue →
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Input mode toggle
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Update button states
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update sections
+        const mode = this.dataset.mode;
+        document.getElementById('inputMode').value = mode;
+        
+        document.getElementById('exactMode').classList.toggle('active', mode === 'exact');
+        document.getElementById('categoryMode').classList.toggle('active', mode === 'category');
+        
+        // Clear validation
+        if (mode === 'exact') {
+            document.querySelectorAll('[name="glucose_category"]').forEach(r => r.required = false);
+            document.getElementById('fastingGlucose').required = true;
+            document.getElementById('hba1c').required = true;
+        } else {
+            document.querySelectorAll('[name="glucose_category"]').forEach(r => r.required = true);
+            document.getElementById('fastingGlucose').required = false;
+            document.getElementById('hba1c').required = false;
+        }
+    });
+});
+
+// Set initial mode from saved data
+{% if pillar3 and pillar3.glucose_input_mode == 'category' %}
+document.querySelector('[data-mode="category"]').click();
+{% endif %}
+
+// Real-time threshold indication
+const glucoseInput = document.getElementById('fastingGlucose');
+const thresholdDiv = document.getElementById('glucoseThreshold');
+
+glucoseInput?.addEventListener('input', function() {
+    const val = parseFloat(this.value);
+    if (isNaN(val)) return;
+    
+    let className = 'threshold-indicator ';
+    if (val < 100) className += 'optimal';
+    else if (val < 110) className += 'borderline';
+    else if (val < 126) className += 'prediabetic';
+    else className += 'diabetic';
+    
+    thresholdDiv.className = className;
+});
+</script>
+{% endblock %}

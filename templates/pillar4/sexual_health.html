@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Sexual Health | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-shield-lock"></i> Test 3: Sexual Health & Function (1 point)</h3>
+            <p class="mb-0">Confidential assessment - Optional</p>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <h5><i class="bi bi-info-circle"></i> Privacy Notice</h5>
+        <p class="mb-0"><strong>This assessment is confidential and optional.</strong> Your response helps evaluate hormonal and vascular health. You may skip this question with no penalty (neutral score of 0.5/1.0).</p>
+    </div>
+    
+    <form method="POST">
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">{{ 'Libido & Erectile Function' if patient.sex == 'male' else 'Libido & Sexual Comfort' }}</h5>
+            </div>
+            <div class="card-body">
+                {% if patient.sex == 'male' %}
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="normal" id="sh_normal" {{ 'checked' if pillar4.sexual_health == 'normal' else '' }}>
+                    <label for="sh_normal" class="radio-label d-block">
+                        <strong>Normal</strong> - Normal libido and erectile function<br>
+                        <small class="text-muted">No concerns</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="mild" id="sh_mild" {{ 'checked' if pillar4.sexual_health == 'mild' else '' }}>
+                    <label for="sh_mild" class="radio-label d-block">
+                        <strong>Mild Decrease</strong> - Slightly reduced libido or occasional difficulty<br>
+                        <small class="text-muted">Minor issue</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="moderate" id="sh_moderate" {{ 'checked' if pillar4.sexual_health == 'moderate' else '' }}>
+                    <label for="sh_moderate" class="radio-label d-block">
+                        <strong>Moderate Issues</strong> - Noticeably reduced libido or ED<br>
+                        <small class="text-muted">Reduced function</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="significant" id="sh_significant" {{ 'checked' if pillar4.sexual_health == 'significant' else '' }}>
+                    <label for="sh_significant" class="radio-label d-block">
+                        <strong>Significant Issues</strong> - Severe ED or very low libido<br>
+                        <small class="text-muted">Requires evaluation</small>
+                    </label>
+                </div>
+                {% else %}
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="normal" id="sh_normal" {{ 'checked' if pillar4.sexual_health == 'normal' else '' }}>
+                    <label for="sh_normal" class="radio-label d-block">
+                        <strong>Normal</strong> - Normal libido and comfort<br>
+                        <small class="text-muted">No concerns</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="mild" id="sh_mild" {{ 'checked' if pillar4.sexual_health == 'mild' else '' }}>
+                    <label for="sh_mild" class="radio-label d-block">
+                        <strong>Mild Decrease</strong> - Slightly reduced libido<br>
+                        <small class="text-muted">Minor issue</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="moderate" id="sh_moderate" {{ 'checked' if pillar4.sexual_health == 'moderate' else '' }}>
+                    <label for="sh_moderate" class="radio-label d-block">
+                        <strong>Moderate Issues</strong> - Reduced libido, dryness, or discomfort<br>
+                        <small class="text-muted">Reduced function</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="sexual_health" value="significant" id="sh_significant" {{ 'checked' if pillar4.sexual_health == 'significant' else '' }}>
+                    <label for="sh_significant" class="radio-label d-block">
+                        <strong>Significant Issues</strong> - Severe symptoms impacting intimacy<br>
+                        <small class="text-muted">Requires evaluation</small>
+                    </label>
+                </div>
+                {% endif %}
+                
+                <div class="radio-card" style="border-color: #6c757d;">
+                    <input type="radio" name="sexual_health" value="skip" id="sh_skip" {{ 'checked' if pillar4.sexual_health == 'skip' else '' }}>
+                    <label for="sh_skip" class="radio-label d-block">
+                        <strong>Prefer Not to Answer</strong><br>
+                        <small class="text-muted">Neutral score of 0.5/1.0 - no penalty</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

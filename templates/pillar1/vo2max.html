@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}VO2 Max Assessment - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 1
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Test 6 of 8: VO2 Max (Cardiorespiratory Fitness)</span>
+        <span class="text-muted">Cardiovascular Fitness • 4 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 75%;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar1.vo2max', assessment_id=assessment.id) }}">
+    
+    <!-- Method Selection -->
+    <div class="form-section">
+        <h5><i class="bi bi-gear"></i> Assessment Method</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card h-100 method-card" onclick="selectMethod('direct')">
+                    <div class="card-body text-center">
+                        <input class="form-check-input" type="radio" name="method" id="method_direct" value="direct"
+                               {% if pillar1 and pillar1.vo2_method == 'direct' %}checked{% endif %}>
+                        <label class="form-check-label d-block" for="method_direct">
+                            <i class="bi bi-heart-pulse fs-1 text-primary"></i>
+                            <h6 class="mt-2">Direct Measurement</h6>
+                            <small class="text-muted">From metabolic cart or lab test</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 method-card" onclick="selectMethod('non_exercise')">
+                    <div class="card-body text-center">
+                        <input class="form-check-input" type="radio" name="method" id="method_non_exercise" value="non_exercise"
+                               {% if not pillar1 or pillar1.vo2_method == 'non_exercise' or not pillar1.vo2_method %}checked{% endif %}>
+                        <label class="form-check-label d-block" for="method_non_exercise">
+                            <i class="bi bi-calculator fs-1 text-success"></i>
+                            <h6 class="mt-2">Non-Exercise Estimation</h6>
+                            <small class="text-muted">Jurca et al. formula (no exercise needed)</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 method-card" onclick="selectMethod('6mwt')">
+                    <div class="card-body text-center">
+                        <input class="form-check-input" type="radio" name="method" id="method_6mwt" value="6mwt"
+                               {% if pillar1 and pillar1.vo2_method == '6mwt' %}checked{% endif %}
+                               {% if not pillar1 or not pillar1.walk_6min_total_m %}disabled{% endif %}>
+                        <label class="form-check-label d-block" for="method_6mwt">
+                            <i class="bi bi-person-walking fs-1 text-warning"></i>
+                            <h6 class="mt-2">From 6MWT</h6>
+                            <small class="text-muted">
+                                {% if pillar1 and pillar1.walk_6min_total_m %}
+                                    Available ({{ pillar1.walk_6min_total_m }}m)
+                                {% else %}
+                                    Complete 6MWT first
+                                {% endif %}
+                            </small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Direct Measurement Input -->
+    <div class="form-section" id="direct_section" style="display: none;">
+        <h5><i class="bi bi-heart-pulse"></i> Direct VO2 Max Value</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="vo2max_direct" class="form-label">VO2 Max from Lab Test</label>
+                <div class="input-group input-group-lg">
+                    <input type="number" class="form-control" id="vo2max_direct" name="vo2max_direct"
+                           value="{{ pillar1.vo2_direct_value if pillar1 and pillar1.vo2_direct_value else '' }}"
+                           step="0.1" min="10" max="80">
+                    <span class="input-group-text">mL/kg/min</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Non-Exercise Estimation Input -->
+    <div class="form-section" id="non_exercise_section">
+        <h5><i class="bi bi-calculator"></i> Non-Exercise Estimation (Jurca et al.)</h5>
+        <p class="text-muted">Based on age, sex, BMI, resting heart rate, and physical activity level</p>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label for="resting_hr" class="form-label required-field">Resting Heart Rate</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="resting_hr" name="resting_hr"
+                           value="{{ pillar1.vo2_resting_hr if pillar1 and pillar1.vo2_resting_hr else '70' }}"
+                           min="40" max="120">
+                    <span class="input-group-text">bpm</span>
+                </div>
+                <div class="form-text">Measure after 5 min seated rest</div>
+            </div>
+            <div class="col-md-6">
+                <label for="pa_index" class="form-label required-field">Physical Activity Index (0-7)</label>
+                <select class="form-select" id="pa_index" name="pa_index">
+                    <option value="0" {% if pillar1 and pillar1.vo2_pa_index == 0 %}selected{% endif %}>0 - Inactive (no regular activity)</option>
+                    <option value="1" {% if pillar1 and pillar1.vo2_pa_index == 1 %}selected{% endif %}>1 - Light (occasional walks)</option>
+                    <option value="2" {% if pillar1 and pillar1.vo2_pa_index == 2 %}selected{% endif %}>2 - Light-Moderate</option>
+                    <option value="3" {% if not pillar1 or pillar1.vo2_pa_index == 3 or pillar1.vo2_pa_index is none %}selected{% endif %}>3 - Moderate (regular walking)</option>
+                    <option value="4" {% if pillar1 and pillar1.vo2_pa_index == 4 %}selected{% endif %}>4 - Moderate-Vigorous</option>
+                    <option value="5" {% if pillar1 and pillar1.vo2_pa_index == 5 %}selected{% endif %}>5 - Vigorous (running, cycling)</option>
+                    <option value="6" {% if pillar1 and pillar1.vo2_pa_index == 6 %}selected{% endif %}>6 - Very Vigorous</option>
+                    <option value="7" {% if pillar1 and pillar1.vo2_pa_index == 7 %}selected{% endif %}>7 - Athlete level</option>
+                </select>
+            </div>
+        </div>
+        
+        {% if section0 %}
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="bi bi-info-circle"></i> Using BMI {{ section0.bmi }} from Section 0
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Reference Ranges -->
+    <div class="form-section">
+        <h5><i class="bi bi-graph-up"></i> VO2 Max Reference Ranges ({{ patient.sex|capitalize }}, Age {{ assessment.age_at_assessment }})</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert alert-success py-2 mb-0 text-center">
+                    <strong>Excellent</strong><br>4.0 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-info py-2 mb-0 text-center">
+                    <strong>Good</strong><br>3.2 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-warning py-2 mb-0 text-center">
+                    <strong>Fair</strong><br>2.0 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-danger py-2 mb-0 text-center">
+                    <strong>Poor</strong><br>&lt;2.0 pts
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-danger mt-3 mb-0">
+            <strong>⚠️ LOW VO2 FLAG:</strong> &lt;20 mL/kg/min indicates severely impaired cardiorespiratory fitness
+        </div>
+    </div>
+    
+    {% if pillar1 and pillar1.vo2_max is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-success">{{ pillar1.vo2_max }}</span>
+                <div class="text-muted">mL/kg/min</div>
+            </div>
+            <div class="col-md-3">
+                <span class="h4">{{ pillar1.vo2_mets }} METs</span>
+            </div>
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-primary">{{ pillar1.vo2_score }}/4.0 pts</span>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-success fs-6">{{ pillar1.vo2_category }}</span>
+                {% if pillar1.low_vo2_flag %}<span class="badge bg-danger ms-2">⚠️ LOW</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg"></i> Save & Continue
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+function selectMethod(method) {
+    document.getElementById('method_' + method).checked = true;
+    document.getElementById('direct_section').style.display = method === 'direct' ? 'block' : 'none';
+    document.getElementById('non_exercise_section').style.display = method === 'non_exercise' ? 'block' : 'none';
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checked = document.querySelector('input[name="method"]:checked');
+    if (checked) selectMethod(checked.value);
+});
+</script>
+{% endblock %}

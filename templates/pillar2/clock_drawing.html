@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Clock Drawing Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Header -->
+<div class="patient-info-bar" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 2
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Test Info Card -->
+<div class="card mb-4" style="border-left: 4px solid #7c3aed;">
+    <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-clock" style="color: #7c3aed;"></i> Clock Drawing Test</h5>
+        <p class="card-text mb-0 text-muted">
+            <strong>Instructions:</strong> Give the patient a blank piece of paper. Ask them to 
+            "Draw a clock, put in all the numbers, and set the time to 11:10" (ten past eleven).
+        </p>
+        <div class="mt-2">
+            <span class="badge bg-secondary">2 Points Max</span>
+            <span class="badge" style="background-color: #f3e8ff; color: #7c3aed;">Visuospatial • Executive Function</span>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    <!-- Component Checklist -->
+    <div class="card mb-4">
+        <div class="card-header" style="background-color: #f3e8ff; color: #7c3aed;">
+            <h6 class="mb-0"><i class="bi bi-check2-square"></i> Component Scoring (7 components)</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">Check each component that is correctly present in the patient's drawing:</p>
+            
+            <!-- Circle Section -->
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small mb-2">Circle</h6>
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_circle_intact %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="circle_intact" id="circle_intact"
+                           {% if pillar2 and pillar2.clock_circle_intact %}checked{% endif %}>
+                    <label class="form-check-label" for="circle_intact">
+                        <strong>1. Circle is intact</strong>
+                        <br><small class="text-muted">Closed circle, reasonably round (minor distortion acceptable)</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Numbers Section -->
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small mb-2">Numbers</h6>
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_numbers_present %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="numbers_present" id="numbers_present"
+                           {% if pillar2 and pillar2.clock_numbers_present %}checked{% endif %}>
+                    <label class="form-check-label" for="numbers_present">
+                        <strong>2. All numbers present (1-12)</strong>
+                        <br><small class="text-muted">All 12 numbers are present, no extras or missing</small>
+                    </label>
+                </div>
+                
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_numbers_sequence %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="numbers_sequence" id="numbers_sequence"
+                           {% if pillar2 and pillar2.clock_numbers_sequence %}checked{% endif %}>
+                    <label class="form-check-label" for="numbers_sequence">
+                        <strong>3. Numbers in correct sequence</strong>
+                        <br><small class="text-muted">Numbers are in order (1→2→3...→12), no sequence errors</small>
+                    </label>
+                </div>
+                
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_numbers_position %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="numbers_position" id="numbers_position"
+                           {% if pillar2 and pillar2.clock_numbers_position %}checked{% endif %}>
+                    <label class="form-check-label" for="numbers_position">
+                        <strong>4. Numbers in correct spatial position</strong>
+                        <br><small class="text-muted">12 at top, 6 at bottom, 3 and 9 on sides; evenly spaced</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Hands Section -->
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small mb-2">Hands</h6>
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_hands_present %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="hands_present" id="hands_present"
+                           {% if pillar2 and pillar2.clock_hands_present %}checked{% endif %}>
+                    <label class="form-check-label" for="hands_present">
+                        <strong>5. Two hands present</strong>
+                        <br><small class="text-muted">Clock has exactly two distinct hands</small>
+                    </label>
+                </div>
+                
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_hands_correct_time %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="hands_correct_time" id="hands_correct_time"
+                           {% if pillar2 and pillar2.clock_hands_correct_time %}checked{% endif %}>
+                    <label class="form-check-label" for="hands_correct_time">
+                        <strong>6. Hands show correct time (11:10)</strong>
+                        <br><small class="text-muted">Short hand pointing near 11, long hand pointing at 2 (for 10 minutes)</small>
+                    </label>
+                </div>
+                
+                <div class="form-check p-3 border rounded mb-2 {% if pillar2 and pillar2.clock_hands_proportion %}bg-success-subtle{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="hands_proportion" id="hands_proportion"
+                           {% if pillar2 and pillar2.clock_hands_proportion %}checked{% endif %}>
+                    <label class="form-check-label" for="hands_proportion">
+                        <strong>7. Hands in correct proportion</strong>
+                        <br><small class="text-muted">Hour hand is shorter than minute hand</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Score Preview -->
+            <div class="bg-light p-3 rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Components checked:</span>
+                    <span id="component-count" class="fs-4 fw-bold" style="color: #7c3aed;">0/7</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notes -->
+    <div class="card mb-4">
+        <div class="card-header" style="background-color: #f3e8ff; color: #7c3aed;">
+            <h6 class="mb-0"><i class="bi bi-pencil-square"></i> Clinical Notes (Optional)</h6>
+        </div>
+        <div class="card-body">
+            <textarea class="form-control" name="notes" rows="3" placeholder="Notable observations (e.g., numbers outside circle, numbers bunched on one side, perseverative errors, etc.)">{{ pillar2.clock_notes if pillar2 else '' }}</textarea>
+        </div>
+    </div>
+    
+    <!-- Previous Result -->
+    {% if pillar2 and pillar2.clock_score_raw is not none %}
+    <div class="alert {% if pillar2.clock_score_raw <= 3 %}alert-danger{% elif pillar2.clock_score_raw <= 5 %}alert-warning{% else %}alert-success{% endif %} mb-4">
+        <strong>Previous Result:</strong> {{ pillar2.clock_score_raw }}/7 components, 
+        {{ pillar2.clock_points }} points ({{ pillar2.clock_category }})
+        {% if pillar2.clock_score_raw <= 3 %}
+        <br><span class="fw-bold">⚠️ Significant visuospatial/executive concern</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Save Button -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-lg" style="background-color: #7c3aed; color: white;">
+                <i class="bi bi-check-lg"></i> Save Clock Drawing
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Scoring Reference -->
+<div class="card mt-4 mb-5" style="border-color: #7c3aed;">
+    <div class="card-header" style="background-color: #f3e8ff;">
+        <h6 class="mb-0" style="color: #7c3aed;"><i class="bi bi-info-circle"></i> Scoring Reference</h6>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Components</th><th>Points</th><th>Category</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>7/7</td><td>2.0</td><td>Perfect</td></tr>
+                <tr><td>6/7</td><td>1.5</td><td>Minor Errors</td></tr>
+                <tr><td>4-5/7</td><td>1.0</td><td>Moderate Errors</td></tr>
+                <tr><td>2-3/7</td><td>0.5</td><td class="text-warning">Significant Errors ⚠️</td></tr>
+                <tr><td>0-1/7</td><td>0.0</td><td class="text-danger fw-bold">Severe Errors ⚠️</td></tr>
+            </tbody>
+        </table>
+        <hr>
+        <p class="small text-muted mb-0">
+            <strong>Common error patterns to note:</strong>
+            <br>• Numbers outside the circle → spatial planning deficit
+            <br>• Numbers bunched on one side → hemispatial neglect
+            <br>• Missing numbers → memory or attention deficit
+            <br>• Hands pointing to 11 and 10 (literal) → executive dysfunction
+        </p>
+    </div>
+</div>
+
+<style>
+.form-check:hover { background-color: #f3e8ff; }
+.form-check-input:checked { background-color: #7c3aed; border-color: #7c3aed; }
+</style>
+
+<script>
+// Update component count dynamically
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.form-check-input[type="checkbox"]');
+    const countDisplay = document.getElementById('component-count');
+    
+    function updateCount() {
+        const checked = document.querySelectorAll('.form-check-input[type="checkbox"]:checked').length;
+        countDisplay.textContent = checked + '/7';
+    }
+    
+    checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
+    updateCount();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Gut Symptoms - Pillar 3{% endblock %}
+{% block extra_css %}
+<style>
+    :root { --pillar3-primary: #2c3e50; --pillar3-accent: #3498db; }
+    .test-header { background: linear-gradient(135deg, var(--pillar3-primary), var(--pillar3-accent)); color: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1.25rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s; }
+    .radio-card:hover { border-color: var(--pillar3-accent); background: rgba(52, 152, 219, 0.05); transform: translateX(5px); }
+    .radio-card.selected { border-color: var(--pillar3-accent); background: rgba(52, 152, 219, 0.1); border-width: 3px; }
+    .question-section { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .question-number { background: var(--pillar3-accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 0.75rem; }
+    .btn-pillar3 { background: var(--pillar3-accent); color: white; border: none; padding: 0.75rem 2rem; border-radius: 6px; transition: all 0.3s; }
+    .btn-pillar3:hover { background: var(--pillar3-primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .clinical-note { font-size: 0.9rem; color: #7f8c8d; margin-top: 0.25rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="test-header">
+        <h2>Test 3: Gut Symptoms</h2>
+        <p class="mb-0">Maximum 4 points (Bloating: 2 pts + Pain: 1 pt + Intolerances: 1 pt)</p>
+    </div>
+    <form method="POST">
+        <div class="question-section">
+            <h4 class="mb-4"><span class="question-number">1</span>How often do you experience bloating or gas? <small class="text-muted">(2 points)</small></h4>
+            <div class="radio-card"><input type="radio" name="bloating_frequency" value="rarely" id="bloat1" {% if pillar3 and pillar3.bloating_frequency == 'rarely' %}checked{% endif %} required><label for="bloat1" class="radio-label ms-2"><strong>Rarely or never</strong><div class="clinical-note">No digestive issue</div></label></div>
+            <div class="radio-card"><input type="radio" name="bloating_frequency" value="occasional" id="bloat2" {% if pillar3 and pillar3.bloating_frequency == 'occasional' %}checked{% endif %}><label for="bloat2" class="radio-label ms-2"><strong>Occasionally (1-2 times per week)</strong><div class="clinical-note">Minor issue</div></label></div>
+            <div class="radio-card"><input type="radio" name="bloating_frequency" value="frequent" id="bloat3" {% if pillar3 and pillar3.bloating_frequency == 'frequent' %}checked{% endif %}><label for="bloat3" class="radio-label ms-2"><strong>Frequently (most days)</strong><div class="clinical-note">⚠️ IBS/SIBO concern</div></label></div>
+            <div class="radio-card"><input type="radio" name="bloating_frequency" value="daily" id="bloat4" {% if pillar3 and pillar3.bloating_frequency == 'daily' %}checked{% endif %}><label for="bloat4" class="radio-label ms-2"><strong>Daily, significantly impacts comfort</strong><div class="clinical-note">⚠️ Chronic issue</div></label></div>
+        </div>
+        <div class="question-section">
+            <h4 class="mb-4"><span class="question-number">2</span>Do you experience abdominal pain or cramping? <small class="text-muted">(1 point)</small></h4>
+            <div class="radio-card"><input type="radio" name="abdominal_pain" value="no" id="pain1" {% if pillar3 and pillar3.abdominal_pain == 'no' %}checked{% endif %} required><label for="pain1" class="radio-label ms-2"><strong>No, never</strong></label></div>
+            <div class="radio-card"><input type="radio" name="abdominal_pain" value="rarely" id="pain2" {% if pillar3 and pillar3.abdominal_pain == 'rarely' %}checked{% endif %}><label for="pain2" class="radio-label ms-2"><strong>Rarely (few times a year)</strong></label></div>
+            <div class="radio-card"><input type="radio" name="abdominal_pain" value="occasional" id="pain3" {% if pillar3 and pillar3.abdominal_pain == 'occasional' %}checked{% endif %}><label for="pain3" class="radio-label ms-2"><strong>Occasionally (1-2 times per month)</strong></label></div>
+            <div class="radio-card"><input type="radio" name="abdominal_pain" value="frequent" id="pain4" {% if pillar3 and pillar3.abdominal_pain == 'frequent' %}checked{% endif %}><label for="pain4" class="radio-label ms-2"><strong>Frequently (weekly or more)</strong><div class="clinical-note">⚠️ IBS/IBD concern</div></label></div>
+        </div>
+        <div class="question-section">
+            <h4 class="mb-4"><span class="question-number">3</span>How many foods do you have intolerances to? <small class="text-muted">(1 point)</small></h4>
+            <div class="radio-card"><input type="radio" name="food_intolerances" value="none" id="intol1" {% if pillar3 and pillar3.food_intolerances == 'none' %}checked{% endif %} required><label for="intol1" class="radio-label ms-2"><strong>None that I know of</strong></label></div>
+            <div class="radio-card"><input type="radio" name="food_intolerances" value="few" id="intol2" {% if pillar3 and pillar3.food_intolerances == 'few' %}checked{% endif %}><label for="intol2" class="radio-label ms-2"><strong>1-2 specific foods</strong><div class="clinical-note">Common (lactose, gluten, etc.)</div></label></div>
+            <div class="radio-card"><input type="radio" name="food_intolerances" value="several" id="intol3" {% if pillar3 and pillar3.food_intolerances == 'several' %}checked{% endif %}><label for="intol3" class="radio-label ms-2"><strong>3-5 foods</strong><div class="clinical-note">Multiple sensitivities</div></label></div>
+            <div class="radio-card"><input type="radio" name="food_intolerances" value="many" id="intol4" {% if pillar3 and pillar3.food_intolerances == 'many' %}checked{% endif %}><label for="intol4" class="radio-label ms-2"><strong>Many foods (6+) or major food groups</strong><div class="clinical-note">⚠️ Severe restrictions</div></label></div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('pillar3.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn btn-pillar3 btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+<script>document.querySelectorAll('.radio-card input[type="radio"]').forEach(radio => { radio.addEventListener('change', function() { const name = this.name; document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.closest('.radio-card').classList.remove('selected')); if (this.checked) this.closest('.radio-card').classList.add('selected'); }); if (radio.checked) radio.closest('.radio-card').classList.add('selected'); });</script>
+{% endblock %}

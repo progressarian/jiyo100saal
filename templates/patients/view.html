@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ patient.full_name }} | Jiyo100Saal FAS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Patient Info Card -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> Patient Info</h5>
+            </div>
+            <div class="card-body">
+                <h4>{{ patient.full_name }}</h4>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-calendar"></i> {{ patient.date_of_birth.strftime('%B %d, %Y') }}
+                </p>
+                <p>
+                    <span class="badge bg-primary fs-6">{{ patient.current_age }} years old</span>
+                    <span class="badge bg-secondary fs-6">
+                        <i class="bi bi-gender-{{ 'male' if patient.sex == 'male' else 'female' }}"></i>
+                        {{ patient.sex|capitalize }}
+                    </span>
+                </p>
+                
+                {% if patient.phone %}
+                <p class="mb-1"><i class="bi bi-telephone"></i> {{ patient.phone }}</p>
+                {% endif %}
+                {% if patient.email %}
+                <p class="mb-1"><i class="bi bi-envelope"></i> {{ patient.email }}</p>
+                {% endif %}
+                {% if patient.external_id %}
+                <p class="mb-1"><i class="bi bi-card-text"></i> ID: {{ patient.external_id }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- New Assessment Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> New Assessment</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('patients.create_assessment', patient_id=patient.id) }}">
+                    <div class="mb-3">
+                        <label for="assessment_type" class="form-label">Assessment Type</label>
+                        <select class="form-select" id="assessment_type" name="assessment_type">
+                            <option value="comprehensive">Comprehensive (Full)</option>
+                            <option value="practical">Practical (Standard)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="clinician_name" class="form-label">Clinician Name</label>
+                        <input type="text" class="form-control" id="clinician_name" name="clinician_name" placeholder="Dr. ">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-clipboard-plus"></i> Start Assessment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assessments List -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Assessments</h5>
+                <span class="badge bg-info">{{ patient.assessments|length }} total</span>
+            </div>
+            <div class="card-body">
+                {% if patient.assessments %}
+                <div class="list-group">
+                    {% for assessment in patient.assessments %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ assessment.assessment_date.strftime('%B %d, %Y') }}
+                                </h6>
+                                <p class="mb-1 text-muted">
+                                    <span class="badge bg-{{ 'success' if assessment.status == 'completed' else 'warning' if assessment.status == 'in_progress' else 'secondary' }}">
+                                        {{ assessment.status|replace('_', ' ')|title }}
+                                    </span>
+                                    <span class="badge bg-outline-info">{{ assessment.assessment_type|capitalize }}</span>
+                                    {% if assessment.clinician_name %}
+                                    <small>by {{ assessment.clinician_name }}</small>
+                                    {% endif %}
+                                </p>
+                                <small class="text-muted">
+                                    Section 0: {{ '✅' if assessment.section0_results else '❌' }}
+                                    | Section 1: {{ '✅' if assessment.section1_results else '❌' }}
+                                    | Pillar 1: {{ '✅' if assessment.pillar1_results else '❌' }}
+                                </small>
+                                {% if assessment.pillar1_total_score %}
+                                <p class="mb-0 mt-1">
+                                    <strong>Pillar 1 Score:</strong> {{ assessment.pillar1_total_score }}/20 
+                                    ({{ assessment.pillar1_percentage|round(1) }}%)
+                                </p>
+                                {% endif %}
+                                {% if assessment.functional_age %}
+                                <p class="mb-0">
+                                    <strong>Functional Age:</strong> {{ assessment.functional_age }} years
+                                    <span class="{{ 'text-success' if assessment.functional_age_delta < 0 else 'text-danger' if assessment.functional_age_delta > 0 else '' }}">
+                                        ({{ '%+d' % assessment.functional_age_delta if assessment.functional_age_delta else '0' }})
+                                    </span>
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if assessment.status != 'completed' %}
+                                <a href="{{ url_for('section0.section0_form', assessment_id=assessment.id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i> Continue
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('assessments.view_assessment', assessment_id=assessment.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-clipboard display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No assessments yet. Start one above!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

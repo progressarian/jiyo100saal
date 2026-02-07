@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Skin & Hair | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-person-badge"></i> Test 8: Skin & Hair Health (1 point)</h3>
+            <p class="mb-0">Elasticity + Hair Quality</p>
+        </div>
+    </div>
+    
+    <form method="POST">
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Skin Elasticity (0.5 points)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Pinch test: Pinch skin on back of hand. How quickly does it return?</p>
+                <div class="radio-card">
+                    <input type="radio" name="skin_elasticity" value="excellent" id="skin_excellent" {{ 'checked' if pillar4.skin_elasticity == 'excellent' else '' }}>
+                    <label for="skin_excellent" class="radio-label d-block">
+                        <strong>Snaps back immediately</strong><br>
+                        <small>Good collagen/hydration</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="skin_elasticity" value="moderate" id="skin_moderate" {{ 'checked' if pillar4.skin_elasticity == 'moderate' else '' }}>
+                    <label for="skin_moderate" class="radio-label d-block">
+                        <strong>Takes 1-2 seconds</strong><br>
+                        <small>Reduced elasticity</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="skin_elasticity" value="poor" id="skin_poor" {{ 'checked' if pillar4.skin_elasticity == 'poor' else '' }}>
+                    <label for="skin_poor" class="radio-label d-block">
+                        <strong>Takes 3+ seconds or stays tented</strong><br>
+                        <small>Poor elasticity - dehydration or aging</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header pillar4-gradient text-white">
+                <h5 class="mb-0">Hair Health (0.5 points)</h5>
+            </div>
+            <div class="card-body">
+                <div class="radio-card">
+                    <input type="radio" name="hair_health" value="thick" id="hair_thick" {{ 'checked' if pillar4.hair_health == 'thick' else '' }}>
+                    <label for="hair_thick" class="radio-label d-block">
+                        <strong>Thick, healthy, minimal loss</strong><br>
+                        <small>Optimal</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="hair_health" value="thinning" id="hair_thinning" {{ 'checked' if pillar4.hair_health == 'thinning' else '' }}>
+                    <label for="hair_thinning" class="radio-label d-block">
+                        <strong>Some thinning but full coverage</strong><br>
+                        <small>Minor concern</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="hair_health" value="loss" id="hair_loss" {{ 'checked' if pillar4.hair_health == 'loss' else '' }}>
+                    <label for="hair_loss" class="radio-label d-block">
+                        <strong>Noticeable thinning or hair loss</strong><br>
+                        <small>Moderate concern - hormonal?</small>
+                    </label>
+                </div>
+                <div class="radio-card">
+                    <input type="radio" name="hair_health" value="significant" id="hair_significant" {{ 'checked' if pillar4.hair_health == 'significant' else '' }}>
+                    <label for="hair_significant" class="radio-label d-block">
+                        <strong>Significant hair loss or very thin</strong><br>
+                        <small>Severe - requires evaluation</small>
+                    </label>
+                </div>
+                <div class="radio-card" style="border-color: #6c757d;">
+                    <input type="radio" name="hair_health" value="na" id="hair_na" {{ 'checked' if pillar4.hair_health == 'na' else '' }}>
+                    <label for="hair_na" class="radio-label d-block">
+                        <strong>N/A (Chose to be bald / Alopecia)</strong><br>
+                        <small>Neutral score</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

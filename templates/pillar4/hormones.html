@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Sex Hormones | Pillar 4{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); }
+    .input-mode-toggle { display: flex; border: 2px solid #8e44ad; border-radius: 8px; overflow: hidden; margin-bottom: 2rem; }
+    .input-mode-toggle button { flex: 1; padding: 1rem; border: none; background: white; color: #8e44ad; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .input-mode-toggle button.active { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; }
+    .radio-card { border: 2px solid #dfe6e9; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+    .radio-card:hover { border-color: #8e44ad; background: rgba(142, 68, 173, 0.05); }
+    .radio-card input[type="radio"]:checked + .radio-label { color: #8e44ad; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <h3><i class="bi bi-activity"></i> Test 2: Sex Hormones (4 points)</h3>
+            <p class="mb-0">{{ 'Testosterone assessment (age-adjusted)' if patient.sex == 'male' else 'Menopause status & hormone balance' }}</p>
+        </div>
+    </div>
+    
+    <form method="POST">
+        {% if patient.sex == 'male' %}
+        <!-- MALE HORMONES -->
+        <div class="input-mode-toggle">
+            <button type="button" id="btn-exact" class="active" onclick="switchMode('exact')">Exact Lab Values</button>
+            <button type="button" id="btn-category" onclick="switchMode('category')">Category Selection</button>
+        </div>
+        
+        <input type="hidden" name="input_mode" id="input_mode" value="exact">
+        
+        <div id="exact-mode">
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Testosterone Levels (Age-Adjusted)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <strong>Patient Age:</strong> {{ assessment.age_at_assessment }} years<br>
+                        <strong>Threshold Bracket:</strong> 
+                        {% if assessment.age_at_assessment < 50 %}Ages 30-49{% elif assessment.age_at_assessment < 70 %}Ages 50-69{% else %}Ages 70+{% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Total Testosterone (ng/dL) *</label>
+                            <input type="number" step="0.1" name="total_testosterone" class="form-control" 
+                                   value="{{ pillar4.total_testosterone if pillar4.total_testosterone else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Free Testosterone (pg/mL) <small>(optional)</small></label>
+                            <input type="number" step="0.01" name="free_testosterone" class="form-control"
+                                   value="{{ pillar4.free_testosterone if pillar4.free_testosterone else '' }}">
+                            <small class="text-muted">Optimal: 12-25 pg/mL</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estradiol (pg/mL) <small>(optional)</small></label>
+                            <input type="number" step="0.1" name="estradiol" class="form-control"
+                                   value="{{ pillar4.estradiol_male if pillar4.estradiol_male else '' }}">
+                            <small class="text-muted">Concern if >40 pg/mL in men</small>
+                        </div>
+                    </div>
+                    
+                    <div class="threshold-indicator">
+                        <strong>Age-Adjusted Ranges:</strong><br>
+                        {% if assessment.age_at_assessment < 50 %}
+                        Optimal: >750 | Very Good: 650-750 | Good: 500-649 | Acceptable: 350-499 | Low: 264-349 | Hypogonadal: <264
+                        {% elif assessment.age_at_assessment < 70 %}
+                        Optimal: >650 | Very Good: 550-650 | Good: 450-549 | Acceptable: 300-449 | Low: 264-299 | Hypogonadal: <264
+                        {% else %}
+                        Optimal: >550 | Very Good: 450-550 | Good: 350-449 | Acceptable: 264-349 | Low: 200-263 | Hypogonadal: <200
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="category-mode" style="display: none;">
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Testosterone Category (for age)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="optimal" id="t_optimal">
+                        <label for="t_optimal" class="radio-label d-block"><strong>Optimal for age</strong> - Excellent levels</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="veryGood" id="t_veryGood">
+                        <label for="t_veryGood" class="radio-label d-block"><strong>Very Good</strong> - Well above average</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="good" id="t_good">
+                        <label for="t_good" class="radio-label d-block"><strong>Good</strong> - Above average</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="acceptable" id="t_acceptable">
+                        <label for="t_acceptable" class="radio-label d-block"><strong>Acceptable</strong> - Within normal range</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="lowNormal" id="t_lowNormal">
+                        <label for="t_lowNormal" class="radio-label d-block"><strong>Low-Normal</strong> - Borderline, may need monitoring</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="testosterone_category" value="low" id="t_low">
+                        <label for="t_low" class="radio-label d-block"><strong>Low/Hypogonadal</strong> - Requires evaluation and treatment</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- FEMALE HORMONES -->
+        <div class="input-mode-toggle">
+            <button type="button" id="btn-exact-female" onclick="switchFemaleMode('exact')">Exact Lab Values</button>
+            <button type="button" id="btn-symptoms-female" class="active" onclick="switchFemaleMode('symptoms')">Symptom Assessment</button>
+        </div>
+        
+        <input type="hidden" name="female_hormone_input_mode" id="female_hormone_input_mode" value="symptoms">
+        
+        <!-- EXACT VALUES MODE -->
+        <div id="exact-mode-female" style="display: none;">
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Female Hormone Panel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <strong>Note:</strong> Female hormone ranges are cycle-dependent and menopause-status specific. Interpretation is based on your age and menopause status below.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estradiol (pg/mL)</label>
+                            <input type="number" step="0.1" name="estradiol_female" class="form-control"
+                                   value="{{ pillar4.estradiol_female if pillar4.estradiol_female else '' }}">
+                            <small class="text-muted">Range: 15-350 (cycle-dependent)</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Progesterone (ng/mL)</label>
+                            <input type="number" step="0.01" name="progesterone" class="form-control"
+                                   value="{{ pillar4.progesterone if pillar4.progesterone else '' }}">
+                            <small class="text-muted">Range: 0.1-25 (cycle-dependent)</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">FSH (mIU/mL)</label>
+                            <input type="number" step="0.1" name="fsh" class="form-control"
+                                   value="{{ pillar4.fsh if pillar4.fsh else '' }}">
+                            <small class="text-muted">Low: &lt;10, Peri: 10-30, Post: &gt;30</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">LH (mIU/mL)</label>
+                            <input type="number" step="0.1" name="lh" class="form-control"
+                                   value="{{ pillar4.lh if pillar4.lh else '' }}">
+                            <small class="text-muted">Range: 2-15</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Testosterone (ng/dL)</label>
+                            <input type="number" step="0.1" name="testosterone_female" class="form-control"
+                                   value="{{ pillar4.testosterone_female if pillar4.testosterone_female else '' }}">
+                            <small class="text-muted">Female range: 15-70</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">AMH (ng/mL) <small>(optional)</small></label>
+                            <input type="number" step="0.01" name="amh" class="form-control"
+                                   value="{{ pillar4.amh if pillar4.amh else '' }}">
+                            <small class="text-muted">Ovarian reserve: &gt;1.0 good, &lt;0.5 low</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Menopause Status (required for exact mode interpretation) -->
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Menopause Status (for interpretation)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="pre" id="meno_pre_exact" onchange="toggleCycleQuestions()" 
+                               {{ 'checked' if pillar4.menopause_status == 'pre' else '' }}>
+                        <label for="meno_pre_exact" class="radio-label d-block"><strong>Pre-menopausal</strong> - Regular menstrual cycles</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="peri" id="meno_peri_exact" onchange="toggleCycleQuestions()"
+                               {{ 'checked' if pillar4.menopause_status == 'peri' else '' }}>
+                        <label for="meno_peri_exact" class="radio-label d-block"><strong>Peri-menopausal</strong> - Irregular cycles, transitioning</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="post" id="meno_post_exact" onchange="toggleCycleQuestions()"
+                               {{ 'checked' if pillar4.menopause_status == 'post' else '' }}>
+                        <label for="meno_post_exact" class="radio-label d-block"><strong>Post-menopausal</strong> - No periods for 12+ months</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Still collect symptoms in exact mode for combined score -->
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Hormone-Related Symptoms</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Hot flashes, night sweats, mood swings, vaginal dryness, etc.</p>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="minimal" id="symptoms_minimal_exact" {{ 'checked' if pillar4.female_symptoms == 'minimal' else '' }}>
+                        <label for="symptoms_minimal_exact" class="radio-label d-block"><strong>Minimal</strong> - Few or no symptoms</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="mild" id="symptoms_mild_exact" {{ 'checked' if pillar4.female_symptoms == 'mild' else '' }}>
+                        <label for="symptoms_mild_exact" class="radio-label d-block"><strong>Mild</strong> - Occasional, not bothersome</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="moderate" id="symptoms_moderate_exact" {{ 'checked' if pillar4.female_symptoms == 'moderate' else '' }}>
+                        <label for="symptoms_moderate_exact" class="radio-label d-block"><strong>Moderate</strong> - Frequent, somewhat bothersome</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="severe" id="symptoms_severe_exact" {{ 'checked' if pillar4.female_symptoms == 'severe' else '' }}>
+                        <label for="symptoms_severe_exact" class="radio-label d-block"><strong>Severe</strong> - Daily, significantly impacting quality of life</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SYMPTOM ASSESSMENT MODE -->
+        <div id="symptoms-mode-female">
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Menopause Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="pre" id="meno_pre" onchange="toggleCycleQuestions()" 
+                               {{ 'checked' if pillar4.menopause_status == 'pre' else '' }}>
+                        <label for="meno_pre" class="radio-label d-block"><strong>Pre-menopausal</strong> - Regular menstrual cycles</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="peri" id="meno_peri" onchange="toggleCycleQuestions()"
+                               {{ 'checked' if pillar4.menopause_status == 'peri' else '' }}>
+                        <label for="meno_peri" class="radio-label d-block"><strong>Peri-menopausal</strong> - Irregular cycles, transitioning</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="menopause_status" value="post" id="meno_post" onchange="toggleCycleQuestions()"
+                               {{ 'checked' if pillar4.menopause_status == 'post' else '' }}>
+                        <label for="meno_post" class="radio-label d-block"><strong>Post-menopausal</strong> - No periods for 12+ months</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3" id="cycle-questions" style="display: none;">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Cycle Regularity (Pre-menopausal only)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="cycle_regularity" value="yes" id="cycle_yes" {{ 'checked' if pillar4.cycle_regularity == 'yes' else '' }}>
+                        <label for="cycle_yes" class="radio-label d-block"><strong>Yes</strong> - Regular 25-35 day cycles</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="cycle_regularity" value="mostly" id="cycle_mostly" {{ 'checked' if pillar4.cycle_regularity == 'mostly' else '' }}>
+                        <label for="cycle_mostly" class="radio-label d-block"><strong>Mostly</strong> - Usually regular with occasional variation</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="cycle_regularity" value="no" id="cycle_no" {{ 'checked' if pillar4.cycle_regularity == 'no' else '' }}>
+                        <label for="cycle_no" class="radio-label d-block"><strong>No</strong> - Irregular or unpredictable</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Hormone-Related Symptoms</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Hot flashes, night sweats, mood swings, vaginal dryness, etc.</p>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="minimal" id="symptoms_minimal" {{ 'checked' if pillar4.female_symptoms == 'minimal' else '' }}>
+                        <label for="symptoms_minimal" class="radio-label d-block"><strong>Minimal</strong> - Few or no symptoms</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="mild" id="symptoms_mild" {{ 'checked' if pillar4.female_symptoms == 'mild' else '' }}>
+                        <label for="symptoms_mild" class="radio-label d-block"><strong>Mild</strong> - Occasional, not bothersome</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="moderate" id="symptoms_moderate" {{ 'checked' if pillar4.female_symptoms == 'moderate' else '' }}>
+                        <label for="symptoms_moderate" class="radio-label d-block"><strong>Moderate</strong> - Frequent, somewhat bothersome</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_symptoms" value="severe" id="symptoms_severe" {{ 'checked' if pillar4.female_symptoms == 'severe' else '' }}>
+                        <label for="symptoms_severe" class="radio-label d-block"><strong>Severe</strong> - Daily, significantly impacting quality of life</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0">Hormone Test Results (if available)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="radio-card">
+                        <input type="radio" name="female_hormone_category" value="optimal" id="horm_optimal" {{ 'checked' if pillar4.female_hormone_category == 'optimal' else '' }}>
+                        <label for="horm_optimal" class="radio-label d-block"><strong>Optimal</strong> - Hormones in ideal range for age</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_hormone_category" value="acceptable" id="horm_acceptable" {{ 'checked' if pillar4.female_hormone_category == 'acceptable' else '' }}>
+                        <label for="horm_acceptable" class="radio-label d-block"><strong>Acceptable</strong> - Within normal range</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_hormone_category" value="imbalanced" id="horm_imbalanced" {{ 'checked' if pillar4.female_hormone_category == 'imbalanced' else '' }}>
+                        <label for="horm_imbalanced" class="radio-label d-block"><strong>Imbalanced</strong> - Some hormones out of range</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_hormone_category" value="deficient" id="horm_deficient" {{ 'checked' if pillar4.female_hormone_category == 'deficient' else '' }}>
+                        <label for="horm_deficient" class="radio-label d-block"><strong>Deficient</strong> - Significantly low levels</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" name="female_hormone_category" value="notTested" id="horm_notTested" {{ 'checked' if not pillar4.female_hormone_category or pillar4.female_hormone_category == 'notTested' else '' }}>
+                        <label for="horm_notTested" class="radio-label d-block"><strong>Not Tested</strong> - No recent hormone panel</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) }}" class="btn btn-secondary btn-lg">← Back</a>
+            <button type="submit" class="btn pillar4-gradient text-white btn-lg">Save & Continue →</button>
+        </div>
+    </form>
+</div>
+
+<script>
+{% if patient.sex == 'male' %}
+function switchMode(mode) {
+    document.getElementById('input_mode').value = mode;
+    if (mode === 'exact') {
+        document.getElementById('exact-mode').style.display = 'block';
+        document.getElementById('category-mode').style.display = 'none';
+        document.getElementById('btn-exact').classList.add('active');
+        document.getElementById('btn-category').classList.remove('active');
+    } else {
+        document.getElementById('exact-mode').style.display = 'none';
+        document.getElementById('category-mode').style.display = 'block';
+        document.getElementById('btn-exact').classList.remove('active');
+        document.getElementById('btn-category').classList.add('active');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% if pillar4.hormone_input_mode == 'category' %}
+    switchMode('category');
+    {% endif %}
+});
+{% else %}
+function switchFemaleMode(mode) {
+    document.getElementById('female_hormone_input_mode').value = mode;
+    if (mode === 'exact') {
+        document.getElementById('exact-mode-female').style.display = 'block';
+        document.getElementById('symptoms-mode-female').style.display = 'none';
+        document.getElementById('btn-exact-female').classList.add('active');
+        document.getElementById('btn-symptoms-female').classList.remove('active');
+    } else {
+        document.getElementById('exact-mode-female').style.display = 'none';
+        document.getElementById('symptoms-mode-female').style.display = 'block';
+        document.getElementById('btn-exact-female').classList.remove('active');
+        document.getElementById('btn-symptoms-female').classList.add('active');
+    }
+}
+
+function toggleCycleQuestions() {
+    const radios = document.querySelectorAll('input[name="menopause_status"]');
+    let selectedStatus = null;
+    radios.forEach(radio => {
+        if (radio.checked) {
+            selectedStatus = radio.value;
+        }
+    });
+    
+    if (selectedStatus) {
+        const cycleQuestions = document.getElementById('cycle-questions');
+        if (cycleQuestions) {
+            cycleQuestions.style.display = selectedStatus === 'pre' ? 'block' : 'none';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% if pillar4.female_hormone_input_mode == 'exact' %}
+    switchFemaleMode('exact');
+    {% endif %}
+    toggleCycleQuestions();
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Pillar 4: Vitality & Hormones | {{ patient.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pillar4-gradient {
+        background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+    }
+    
+    .test-card {
+        border-left: 4px solid #8e44ad;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .test-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(142, 68, 173, 0.2);
+    }
+    
+    .test-card.completed {
+        border-left-color: #27ae60;
+        background-color: #f0fff4;
+    }
+    
+    .score-badge {
+        background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    
+    .progress-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(#8e44ad 0%, #3498db calc(var(--progress) * 1%), #e0e0e0 calc(var(--progress) * 1%));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .progress-circle-inner {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #8e44ad;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="card pillar4-gradient text-white mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-2"><i class="bi bi-activity"></i> Pillar 4: Vitality & Hormones</h2>
+                    <p class="mb-0">{{ patient.full_name }} | Age: {{ assessment.age_at_assessment }} | {{ patient.sex|capitalize }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    {% if pillar4.pillar4_total %}
+                    <h1 class="mb-0">{{ pillar4.pillar4_total }}/20</h1>
+                    <p class="mb-0">{{ pillar4.pillar4_category }}</p>
+                    {% else %}
+                    <h3 class="mb-0">{{ tests_completed }}/{{ total_tests }} Tests</h3>
+                    <p class="mb-0">Complete all tests</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header pillar4-gradient text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Test Components</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Test 1: Thyroid -->
+                    <a href="{{ url_for('pillar4.thyroid', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.thyroid_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">1. Thyroid Function</h6>
+                                        <small class="text-muted">TSH, Free T4, Free T3 (4 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.thyroid_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.thyroid_points }}/4.0</span>
+                                        <br><small>{{ pillar4.thyroid_category }}</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 2: Sex Hormones -->
+                    <a href="{{ url_for('pillar4.hormones', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.hormone_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">2. Sex Hormones</h6>
+                                        <small class="text-muted">{% if patient.sex == 'male' %}Testosterone, Estradiol{% else %}Menopause status, Cycles, Symptoms{% endif %} (4 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.hormone_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.hormone_points }}/4.0</span>
+                                        <br><small>{{ pillar4.hormone_assessment or 'Completed' }}</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 3: Sexual Health -->
+                    <a href="{{ url_for('pillar4.sexual_health', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.sexual_health_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">3. Sexual Health & Function</h6>
+                                        <small class="text-muted">Confidential assessment (1 point) - Optional</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.sexual_health_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.sexual_health_points }}/1.0</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 4: Vitamin D -->
+                    <a href="{{ url_for('pillar4.vitamin_d', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.vitd_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">4. Vitamin D</h6>
+                                        <small class="text-muted">25-Hydroxy Vitamin D (2 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.vitd_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.vitd_points }}/2.0</span>
+                                        <br><small>{{ pillar4.vitd_category }}</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 5: Hemoglobin & Iron -->
+                    <a href="{{ url_for('pillar4.iron', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.iron_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">5. Hemoglobin & Iron Status</h6>
+                                        <small class="text-muted">Sex-adjusted thresholds (2 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.iron_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.iron_points }}/2.0</span>
+                                        <br><small>{{ pillar4.iron_category }}</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 6: Exercise -->
+                    <a href="{{ url_for('pillar4.exercise', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.exercise_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">6. Exercise Habits</h6>
+                                        <small class="text-muted">Frequency + Types (2 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.exercise_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.exercise_points }}/2.0</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 7: Sleep -->
+                    <a href="{{ url_for('pillar4.sleep', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.sleep_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">7. Sleep Duration & Quality</h6>
+                                        <small class="text-muted">Duration, Quality, Onset (3 points)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.sleep_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.sleep_points }}/3.0</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 8: Appearance -->
+                    <a href="{{ url_for('pillar4.appearance', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.appearance_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">8. Skin & Hair Health</h6>
+                                        <small class="text-muted">Elasticity + Hair quality (1 point)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.appearance_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.appearance_points }}/1.0</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Test 9: Stress -->
+                    <a href="{{ url_for('pillar4.stress', assessment_id=assessment.id) }}" class="text-decoration-none">
+                        <div class="card test-card mb-3 {% if pillar4.stress_points is not none %}completed{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <h6 class="mb-1">9. Stress & Overwhelm</h6>
+                                        <small class="text-muted">1-10 scale (1 point)</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if pillar4.stress_points is not none %}
+                                        <span class="badge bg-success">{{ pillar4.stress_points }}/1.0</span>
+                                        <br><small>Level: {{ pillar4.stress_level }}/10</small>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not started</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <i class="bi bi-arrow-right-circle fs-4 text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Progress -->
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <div class="progress-circle mx-auto mb-3" style="--progress: {{ (tests_completed / total_tests * 100)|round(0) }}">
+                        <div class="progress-circle-inner">
+                            {{ tests_completed }}/{{ total_tests }}
+                        </div>
+                    </div>
+                    <p class="mb-0"><strong>{{ ((tests_completed / total_tests * 100)|round(0))|int }}% Complete</strong></p>
+                </div>
+            </div>
+            
+            <!-- Total Score -->
+            {% if pillar4.pillar4_total %}
+            <div class="card mb-3">
+                <div class="card-header pillar4-gradient text-white">
+                    <h6 class="mb-0">Total Score</h6>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ pillar4.pillar4_total }}/20</h2>
+                    <p class="text-muted mb-2">{{ pillar4.pillar4_pct }}%</p>
+                    <span class="badge score-badge">{{ pillar4.pillar4_category }}</span>
+                    
+                    {% if pillar4.functional_age_modifier %}
+                    <hr>
+                    <p class="mb-0"><strong>Functional Age Impact:</strong></p>
+                    <h4 class="mb-0 {{ 'text-success' if pillar4.functional_age_modifier < 0 else 'text-danger' if pillar4.functional_age_modifier > 0 else '' }}">
+                        {{ '%+.1f' % pillar4.functional_age_modifier }} years
+                    </h4>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Clinical Alerts -->
+            {% if pillar4.clinical_alerts and pillar4.clinical_alerts|length > 0 %}
+            <div class="card mb-3">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Clinical Alerts</h6>
+                </div>
+                <div class="card-body">
+                    {% for alert in pillar4.clinical_alerts %}
+                    <div class="alert alert-{{ 'danger' if alert.level == 'urgent' else 'warning' }} py-2 mb-2">
+                        <small><strong>{{ alert.code }}:</strong> {{ alert.message }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('pillar4.calculate_total', assessment_id=assessment.id) }}">
+                        <button type="submit" class="btn pillar4-gradient text-white w-100 mb-2" {% if tests_completed < total_tests %}disabled{% endif %}>
+                            <i class="bi bi-calculator"></i> Calculate Pillar 4 Total
+                        </button>
+                    </form>
+                    
+                    <a href="{{ url_for('assessments.view_assessment', assessment_id=assessment.id) }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left"></i> Back to Assessment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

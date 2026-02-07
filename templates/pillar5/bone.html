@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Bone Health - Pillar 5{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #16a085 0%, #27ae60 100%); color: white;">
+            <h4><i class="bi bi-back"></i> Bone Health (1 point)</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- DEXA Performed -->
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="dexa_performed" name="dexa_performed"
+                               {% if pillar5.dexa_performed %}checked{% endif %}
+                               onchange="toggleDexaFields()">
+                        <label class="form-check-label" for="dexa_performed">
+                            <strong>DEXA Scan Performed</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- T-Score Input Mode -->
+                <div class="mb-4" id="tscore-field" style="display: {% if pillar5.dexa_performed %}block{% else %}none{% endif %};">
+                    <label class="form-label"><strong>DEXA Scan Results</strong></label>
+                    
+                    <!-- Option 1: Exact T-score -->
+                    <div class="mb-3">
+                        <label class="form-label">Enter Exact T-Score:</label>
+                        <input type="number" step="0.1" class="form-control" name="dexa_t_score" 
+                               value="{{ pillar5.dexa_t_score if pillar5.dexa_t_score else '' }}" 
+                               placeholder="e.g., -1.5">
+                        <small class="text-muted">Or select category below if exact value not available</small>
+                    </div>
+                    
+                    <!-- Option 2: Category Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Or Select Category:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="bone_category_radio" id="bone-normal" value="normal">
+                            <label class="form-check-label" for="bone-normal">
+                                <strong>Normal</strong> (T-score ≥ -1.0)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="bone_category_radio" id="bone-mild-osteopenia" value="mild-osteopenia">
+                            <label class="form-check-label" for="bone-mild-osteopenia">
+                                <strong>Mild Osteopenia</strong> (T-score -1.0 to -1.5)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="bone_category_radio" id="bone-osteopenia" value="osteopenia">
+                            <label class="form-check-label" for="bone-osteopenia">
+                                <strong>Osteopenia</strong> (T-score -1.6 to -2.5)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="bone_category_radio" id="bone-osteoporosis" value="osteoporosis">
+                            <label class="form-check-label" for="bone-osteoporosis">
+                                <strong>Osteoporosis</strong> (T-score ≤ -2.5)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="bone_category_radio" id="bone-fracture" value="fracture">
+                            <label class="form-check-label" for="bone-fracture">
+                                <strong>History of Fragility Fracture</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small><i class="bi bi-info-circle"></i> <strong>Recommendation:</strong> DEXA scan recommended for women ≥65 years and men ≥70 years, or younger if risk factors present.</small>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn" style="background-color: #16a085; color: white;">
+                        <i class="bi bi-save"></i> Save Results
+                    </button>
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDexaFields() {
+    const performed = document.getElementById('dexa_performed').checked;
+    document.getElementById('tscore-field').style.display = performed ? 'block' : 'none';
+}
+</script>
+{% endblock %}

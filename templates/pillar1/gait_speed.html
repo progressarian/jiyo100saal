@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Gait Speed Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 1
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Test 3 of 8: 4-Meter Gait Speed</span>
+        <span class="text-muted">Walking Speed • 2 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" style="width: 37.5%;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar1.gait_speed', assessment_id=assessment.id) }}">
+    
+    <!-- Protocol Info -->
+    <div class="form-section">
+        <h5><i class="bi bi-clipboard-check"></i> Test Protocol</h5>
+        <ul class="mb-0">
+            <li>Mark 4-meter walking path with 1m acceleration and deceleration zones</li>
+            <li>Patient walks at usual/comfortable pace</li>
+            <li>Start timing when lead foot crosses start line</li>
+            <li>Stop when lead foot crosses finish line</li>
+            <li>2 trials, use FASTER time for scoring</li>
+        </ul>
+    </div>
+    
+    <!-- Input -->
+    <div class="form-section">
+        <h5><i class="bi bi-pencil-square"></i> Test Results</h5>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <label for="trial1_time" class="form-label required-field">Trial 1 Time</label>
+                <div class="input-group">
+                    <input type="number" class="form-control form-control-lg" id="trial1_time" name="trial1_time"
+                           value="{{ pillar1.gait_trial_1_sec if pillar1 and pillar1.gait_trial_1_sec else '' }}"
+                           step="0.01" min="1" max="60" required>
+                    <span class="input-group-text">seconds</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="trial2_time" class="form-label required-field">Trial 2 Time</label>
+                <div class="input-group">
+                    <input type="number" class="form-control form-control-lg" id="trial2_time" name="trial2_time"
+                           value="{{ pillar1.gait_trial_2_sec if pillar1 and pillar1.gait_trial_2_sec else '' }}"
+                           step="0.01" min="1" max="60" required>
+                    <span class="input-group-text">seconds</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="walking_aid" class="form-label">Walking Aid Used</label>
+                <select class="form-select form-select-lg" id="walking_aid" name="walking_aid">
+                    <option value="" {% if not pillar1 or not pillar1.gait_walking_aid %}selected{% endif %}>None</option>
+                    <option value="cane" {% if pillar1 and pillar1.gait_walking_aid == 'cane' %}selected{% endif %}>Cane</option>
+                    <option value="walker" {% if pillar1 and pillar1.gait_walking_aid == 'walker' %}selected{% endif %}>Walker</option>
+                    <option value="other" {% if pillar1 and pillar1.gait_walking_aid == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clinical Thresholds -->
+    <div class="form-section">
+        <h5><i class="bi bi-speedometer2"></i> Clinical Thresholds</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert alert-success py-2 mb-0 text-center">
+                    <strong>≥1.2 m/s</strong><br>Excellent
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-info py-2 mb-0 text-center">
+                    <strong>1.0-1.19 m/s</strong><br>Normal
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-warning py-2 mb-0 text-center">
+                    <strong>0.8-0.99 m/s</strong><br>Slow
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-danger py-2 mb-0 text-center">
+                    <strong>&lt;0.8 m/s</strong><br>⚠️ FALL RISK
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if pillar1 and pillar1.gait_speed_ms is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-success">{{ pillar1.gait_speed_ms }} m/s</span>
+                <div class="text-muted">Faster trial: {{ pillar1.gait_faster_sec }} sec</div>
+            </div>
+            <div class="col-md-4">
+                <span class="display-6 fw-bold text-primary">{{ pillar1.gait_score }}/2.0 pts</span>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-success fs-6">{{ pillar1.gait_category }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg"></i> Save & Continue
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

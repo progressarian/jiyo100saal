@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}6-Minute Walk Test - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark">{{ patient.sex|capitalize }}</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Pillar 1
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Test 8 of 8: 6-Minute Walk Test (6MWT)</span>
+        <span class="text-muted">Endurance • 3 points max</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-success" style="width: 100%;"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('pillar1.walk_6min', assessment_id=assessment.id) }}">
+    
+    <!-- Protocol Info -->
+    <div class="form-section">
+        <h5><i class="bi bi-clipboard-check"></i> Test Protocol</h5>
+        <ul class="mb-0">
+            <li>Flat, measured hallway course (typically 30m)</li>
+            <li>Mark turnaround points with cones</li>
+            <li>Walk as FAR as possible in 6 minutes at own pace</li>
+            <li>Can slow down or rest, but clock keeps running</li>
+            <li>Standardized encouragement every minute</li>
+            <li>Record total laps and partial distance at 6:00</li>
+        </ul>
+    </div>
+    
+    <!-- Input -->
+    <div class="form-section">
+        <h5><i class="bi bi-pencil-square"></i> Test Results</h5>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <label for="course_length" class="form-label required-field">Course Length</label>
+                <div class="input-group">
+                    <input type="number" class="form-control form-control-lg" id="course_length" name="course_length"
+                           value="30" min="10" max="50" required>
+                    <span class="input-group-text">meters</span>
+                </div>
+                <div class="form-text">Standard is 30m (one-way)</div>
+            </div>
+            <div class="col-md-4">
+                <label for="laps" class="form-label required-field">Complete Laps</label>
+                <input type="number" class="form-control form-control-lg text-center" id="laps" name="laps"
+                       value="{{ pillar1.walk_6min_laps if pillar1 and pillar1.walk_6min_laps is not none else '' }}"
+                       min="0" max="50" required style="font-size: 2rem; font-weight: bold;">
+                <div class="form-text">Count each one-way trip as 1 lap</div>
+            </div>
+            <div class="col-md-4">
+                <label for="partial_distance" class="form-label">Partial Distance at End</label>
+                <div class="input-group">
+                    <input type="number" class="form-control form-control-lg" id="partial_distance" name="partial_distance"
+                           value="{{ pillar1.walk_6min_partial_m if pillar1 and pillar1.walk_6min_partial_m is not none else '0' }}"
+                           min="0" max="30" step="0.5">
+                    <span class="input-group-text">meters</span>
+                </div>
+                <div class="form-text">Distance past last turnaround</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary mt-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <strong>Total Distance:</strong>
+                    <span id="total_distance" class="fs-4 text-primary fw-bold">
+                        {{ pillar1.walk_6min_total_m if pillar1 and pillar1.walk_6min_total_m else '---' }}
+                    </span> meters
+                </div>
+                <div class="col-md-6">
+                    <button type="button" class="btn btn-outline-primary" onclick="calculateDistance()">
+                        <i class="bi bi-calculator"></i> Calculate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reference Ranges -->
+    <div class="form-section">
+        <h5><i class="bi bi-graph-up"></i> Reference Ranges</h5>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <div class="alert alert-success py-2 mb-0 text-center">
+                    <strong>Excellent</strong><br>&gt;550m (M) / &gt;500m (F)<br>3.0 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-info py-2 mb-0 text-center">
+                    <strong>Good</strong><br>450-550m (M) / 400-500m (F)<br>2.4 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-warning py-2 mb-0 text-center">
+                    <strong>Fair</strong><br>350-449m (M) / 300-399m (F)<br>1.5 pts
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="alert alert-danger py-2 mb-0 text-center">
+                    <strong>Poor</strong><br>&lt;350m (M) / &lt;300m (F)<br>&lt;1.5 pts
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if pillar1 and pillar1.walk_6min_score is not none %}
+    <!-- Current Result -->
+    <div class="form-section" style="background-color: #d4edda; border-left: 4px solid #28a745;">
+        <h5 class="text-success"><i class="bi bi-check-circle-fill"></i> Current Result</h5>
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-success">{{ pillar1.walk_6min_total_m }} m</span>
+                <div class="text-muted">Total distance</div>
+            </div>
+            <div class="col-md-3">
+                <span class="h4">{{ pillar1.walk_6min_pct_predicted }}%</span>
+                <div class="text-muted">of predicted</div>
+            </div>
+            <div class="col-md-3">
+                <span class="display-6 fw-bold text-primary">{{ pillar1.walk_6min_score }}/3.0 pts</span>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-success fs-6">{{ pillar1.walk_6min_category }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Save Bar -->
+    <div class="sticky-save-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-lg"></i> Save & Finish Pillar 1
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+function calculateDistance() {
+    const laps = parseInt(document.getElementById('laps').value) || 0;
+    const courseLength = parseInt(document.getElementById('course_length').value) || 30;
+    const partial = parseFloat(document.getElementById('partial_distance').value) || 0;
+    const total = (laps * courseLength) + partial;
+    document.getElementById('total_distance').textContent = total;
+}
+
+// Auto-calculate on input change
+document.getElementById('laps').addEventListener('input', calculateDistance);
+document.getElementById('course_length').addEventListener('input', calculateDistance);
+document.getElementById('partial_distance').addEventListener('input', calculateDistance);
+</script>
+{% endblock %}

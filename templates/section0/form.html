@@ -1,0 +1,1153 @@
+{% extends "base.html" %}
+
+{% block title %}Section 0 - Baseline Health | {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-calendar"></i> Age: {{ assessment.age_at_assessment }} years
+            </span>
+            <span class="badge bg-light text-dark me-2">
+                <i class="bi bi-gender-{{ 'male' if patient.sex == 'male' else 'female' }}"></i> 
+                {{ patient.sex|capitalize }}
+            </span>
+            <span class="badge bg-light text-dark">
+                <i class="bi bi-clipboard"></i> {{ assessment.assessment_type|capitalize }}
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <small>Assessment Date: {{ assessment.assessment_date.strftime('%B %d, %Y') }}</small>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Indicator -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="fw-bold text-primary">Section 0: Baseline Health</span>
+        <span class="text-muted">Step 1 of 5</span>
+    </div>
+    <div class="progress" style="height: 8px;">
+        <div class="progress-bar" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('section0.save_section0', assessment_id=assessment.id) }}" id="section0Form">
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: ANTHROPOMETRICS -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-rulers"></i> Anthropometrics</h5>
+        
+        <div class="row g-3">
+            <!-- Height -->
+            <div class="col-md-4">
+                <label for="height_cm" class="form-label required-field">Height</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="height_cm" name="height_cm"
+                           value="{{ section0.height_cm if section0 else '' }}"
+                           min="120" max="220" step="0.1" required
+                           placeholder="e.g., 175">
+                    <span class="input-group-text">cm</span>
+                </div>
+                <div class="form-text">Range: 120-220 cm</div>
+            </div>
+            
+            <!-- Weight -->
+            <div class="col-md-4">
+                <label for="weight_kg" class="form-label required-field">Weight</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="weight_kg" name="weight_kg"
+                           value="{{ section0.weight_kg if section0 else '' }}"
+                           min="30" max="250" step="0.1" required
+                           placeholder="e.g., 75">
+                    <span class="input-group-text">kg</span>
+                </div>
+                <div class="form-text">Range: 30-250 kg</div>
+            </div>
+            
+            <!-- BMI (Auto-calculated) -->
+            <div class="col-md-4">
+                <label for="bmi_display" class="form-label">
+                    BMI 
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                       title="Automatically calculated from height and weight"></i>
+                </label>
+                <input type="text" class="form-control calculated-field" id="bmi_display" readonly
+                       value="{{ section0.bmi if section0 and section0.bmi else '' }}"
+                       placeholder="Auto-calculated">
+                <div class="form-text">
+                    Category: <span id="bmi_category" class="fw-bold">{{ section0.bmi_category if section0 else '--' }}</span>
+                </div>
+            </div>
+            
+            <!-- Waist Circumference -->
+            <div class="col-md-4">
+                <label for="waist_circumference_cm" class="form-label">Waist Circumference</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="waist_circumference_cm" name="waist_circumference_cm"
+                           value="{{ section0.waist_circumference_cm if section0 else '' }}"
+                           min="40" max="200" step="0.1"
+                           placeholder="e.g., 90">
+                    <span class="input-group-text">cm</span>
+                </div>
+                <div class="form-text">
+                    Risk: <span id="waist_risk" class="risk-indicator">{{ section0.waist_risk if section0 else '--' }}</span>
+                </div>
+            </div>
+            
+            <!-- Hip Circumference -->
+            <div class="col-md-4">
+                <label for="hip_circumference_cm" class="form-label">Hip Circumference</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="hip_circumference_cm" name="hip_circumference_cm"
+                           value="{{ section0.hip_circumference_cm if section0 else '' }}"
+                           min="40" max="200" step="0.1"
+                           placeholder="e.g., 100">
+                    <span class="input-group-text">cm</span>
+                </div>
+            </div>
+            
+            <!-- Waist-Hip Ratio (Auto-calculated) -->
+            <div class="col-md-4">
+                <label for="whr_display" class="form-label">Waist-Hip Ratio</label>
+                <input type="text" class="form-control calculated-field" id="whr_display" readonly
+                       value="{{ section0.waist_hip_ratio if section0 and section0.waist_hip_ratio else '' }}"
+                       placeholder="Auto-calculated">
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: VITAL SIGNS -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-heart-pulse"></i> Vital Signs</h5>
+        
+        <div class="row g-3">
+            <!-- Blood Pressure Reading 1 -->
+            <div class="col-md-6">
+                <label class="form-label">Blood Pressure - Reading 1</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bp_systolic_1" name="bp_systolic_1"
+                                   value="{{ section0.bp_systolic_1 if section0 else '' }}"
+                                   min="60" max="250" placeholder="Systolic">
+                            <span class="input-group-text">/</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bp_diastolic_1" name="bp_diastolic_1"
+                                   value="{{ section0.bp_diastolic_1 if section0 else '' }}"
+                                   min="40" max="150" placeholder="Diastolic">
+                            <span class="input-group-text">mmHg</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Blood Pressure Reading 2 -->
+            <div class="col-md-6">
+                <label class="form-label">Blood Pressure - Reading 2</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bp_systolic_2" name="bp_systolic_2"
+                                   value="{{ section0.bp_systolic_2 if section0 else '' }}"
+                                   min="60" max="250" placeholder="Systolic">
+                            <span class="input-group-text">/</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bp_diastolic_2" name="bp_diastolic_2"
+                                   value="{{ section0.bp_diastolic_2 if section0 else '' }}"
+                                   min="40" max="150" placeholder="Diastolic">
+                            <span class="input-group-text">mmHg</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BP Average (Auto-calculated) -->
+            <div class="col-md-4">
+                <label class="form-label">Average BP</label>
+                <input type="text" class="form-control calculated-field" id="bp_avg_display" readonly
+                       value="{{ section0.bp_systolic_avg|string + '/' + section0.bp_diastolic_avg|string if section0 and section0.bp_systolic_avg else '' }}"
+                       placeholder="Auto-calculated">
+                <div class="form-text">
+                    Classification: <span id="bp_classification" class="fw-bold risk-indicator">
+                        {{ section0.bp_classification if section0 else '--' }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- BP Measurement Details -->
+            <div class="col-md-4">
+                <label for="bp_arm_used" class="form-label">Arm Used</label>
+                <select class="form-select" id="bp_arm_used" name="bp_arm_used">
+                    <option value="">-- Select --</option>
+                    <option value="right" {{ 'selected' if section0 and section0.bp_arm_used == 'right' else '' }}>Right</option>
+                    <option value="left" {{ 'selected' if section0 and section0.bp_arm_used == 'left' else '' }}>Left</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="bp_cuff_size" class="form-label">Cuff Size</label>
+                <select class="form-select" id="bp_cuff_size" name="bp_cuff_size">
+                    <option value="">-- Select --</option>
+                    <option value="small" {{ 'selected' if section0 and section0.bp_cuff_size == 'small' else '' }}>Small</option>
+                    <option value="standard" {{ 'selected' if section0 and section0.bp_cuff_size == 'standard' else '' }}>Standard</option>
+                    <option value="large" {{ 'selected' if section0 and section0.bp_cuff_size == 'large' else '' }}>Large</option>
+                </select>
+            </div>
+            
+            <!-- Heart Rate -->
+            <div class="col-md-4">
+                <label for="resting_heart_rate" class="form-label">Resting Heart Rate</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="resting_heart_rate" name="resting_heart_rate"
+                           value="{{ section0.resting_heart_rate if section0 else '' }}"
+                           min="30" max="200" placeholder="e.g., 72">
+                    <span class="input-group-text">bpm</span>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="hr_method" class="form-label">HR Method</label>
+                <select class="form-select" id="hr_method" name="hr_method">
+                    <option value="">-- Select --</option>
+                    <option value="pulse_ox" {{ 'selected' if section0 and section0.hr_method == 'pulse_ox' else '' }}>Pulse Oximeter</option>
+                    <option value="bp_monitor" {{ 'selected' if section0 and section0.hr_method == 'bp_monitor' else '' }}>BP Monitor</option>
+                    <option value="manual" {{ 'selected' if section0 and section0.hr_method == 'manual' else '' }}>Manual Palpation</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="hr_rhythm" class="form-label">Rhythm</label>
+                <select class="form-select" id="hr_rhythm" name="hr_rhythm">
+                    <option value="">-- Select --</option>
+                    <option value="regular" {{ 'selected' if section0 and section0.hr_rhythm == 'regular' else '' }}>Regular</option>
+                    <option value="irregular" {{ 'selected' if section0 and section0.hr_rhythm == 'irregular' else '' }}>Irregular</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: MEDICATIONS -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-capsule"></i> Medications</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="medication_count" class="form-label">Number of Medications</label>
+                <select class="form-select" id="medication_count" name="medication_count">
+                    <option value="">-- Select --</option>
+                    <option value="0" {{ 'selected' if section0 and section0.medication_count == 0 else '' }}>None (0)</option>
+                    <option value="2" {{ 'selected' if section0 and section0.medication_count == 2 else '' }}>1-2 medications</option>
+                    <option value="4" {{ 'selected' if section0 and section0.medication_count == 4 else '' }}>3-4 medications</option>
+                    <option value="7" {{ 'selected' if section0 and section0.medication_count == 7 else '' }}>5-9 medications (Polypharmacy)</option>
+                    <option value="10" {{ 'selected' if section0 and section0.medication_count == 10 else '' }}>10+ medications</option>
+                </select>
+                <div class="form-text">
+                    Level: <span id="polypharmacy_level" class="fw-bold">{{ section0.polypharmacy_level if section0 else '--' }}</span>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <label class="form-label">Medication Categories (check all that apply)</label>
+                <div class="row">
+                    {% set med_cats = section0.medication_categories if section0 and section0.medication_categories else [] %}
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="bp_meds" id="med_bp"
+                                   {{ 'checked' if 'bp_meds' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_bp">Blood Pressure Meds</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="cholesterol" id="med_chol"
+                                   {{ 'checked' if 'cholesterol' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_chol">Cholesterol Meds (Statins)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="diabetes_oral" id="med_diab"
+                                   {{ 'checked' if 'diabetes_oral' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_diab">Diabetes - Oral</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="diabetes_insulin" id="med_ins"
+                                   {{ 'checked' if 'diabetes_insulin' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_ins">Diabetes - Insulin</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="blood_thinners" id="med_thin"
+                                   {{ 'checked' if 'blood_thinners' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_thin">Blood Thinners</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="psychiatric" id="med_psych"
+                                   {{ 'checked' if 'psychiatric' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_psych">Psychiatric Meds</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="thyroid" id="med_thy"
+                                   {{ 'checked' if 'thyroid' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_thy">Thyroid Meds</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="medication_categories" value="pain_opioids" id="med_opi"
+                                   {{ 'checked' if 'pain_opioids' in med_cats else '' }}>
+                            <label class="form-check-label" for="med_opi">Pain - Opioids</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: SMOKING -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-wind"></i> Smoking History</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="smoking_status" class="form-label">Smoking Status</label>
+                <select class="form-select" id="smoking_status" name="smoking_status">
+                    <option value="">-- Select --</option>
+                    <option value="never" {{ 'selected' if section0 and section0.smoking_status == 'never' else '' }}>Never smoked</option>
+                    <option value="quit_15plus" {{ 'selected' if section0 and section0.smoking_status == 'quit_15plus' else '' }}>Former - Quit >15 years ago</option>
+                    <option value="quit_5_15" {{ 'selected' if section0 and section0.smoking_status == 'quit_5_15' else '' }}>Former - Quit 5-15 years ago</option>
+                    <option value="quit_under_5" {{ 'selected' if section0 and section0.smoking_status == 'quit_under_5' else '' }}>Former - Quit <5 years ago</option>
+                    <option value="current" {{ 'selected' if section0 and section0.smoking_status == 'current' else '' }}>Current smoker</option>
+                </select>
+            </div>
+            
+            <!-- Conditional smoking fields -->
+            <div id="smoking_details" class="col-12" style="display: none;">
+                <div class="conditional-section">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="cigarettes_per_day" class="form-label">Cigarettes/Day</label>
+                            <input type="number" class="form-control" id="cigarettes_per_day"
+                                   min="0" max="100" placeholder="e.g., 20">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="years_smoked" class="form-label">Years Smoked</label>
+                            <input type="number" class="form-control" id="years_smoked"
+                                   min="0" max="80" placeholder="e.g., 15">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="pack_years" class="form-label">Pack-Years</label>
+                            <input type="number" class="form-control calculated-field" id="pack_years" name="pack_years"
+                                   value="{{ section0.pack_years if section0 else '' }}"
+                                   step="0.1" readonly placeholder="Auto-calculated">
+                            <div class="form-text">= (cigs/day ÷ 20) × years</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="quit_date" class="form-label">Quit Date</label>
+                            <input type="date" class="form-control" id="quit_date" name="quit_date"
+                                   value="{{ section0.quit_date.isoformat() if section0 and section0.quit_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: ALCOHOL -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-cup-straw"></i> Alcohol Use</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="alcohol_drinks_per_week" class="form-label">Drinks Per Week</label>
+                <input type="number" class="form-control" id="alcohol_drinks_per_week" name="alcohol_drinks_per_week"
+                       value="{{ section0.alcohol_drinks_per_week if section0 else '' }}"
+                       min="0" max="100" placeholder="e.g., 7">
+                <div class="form-text">1 drink = 12oz beer, 5oz wine, 1.5oz spirits</div>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="alcohol_pattern" class="form-label">Drinking Pattern</label>
+                <select class="form-select" id="alcohol_pattern" name="alcohol_pattern">
+                    <option value="">-- Select --</option>
+                    <option value="spread" {{ 'selected' if section0 and section0.alcohol_pattern == 'spread' else '' }}>Spread throughout week</option>
+                    <option value="weekend" {{ 'selected' if section0 and section0.alcohol_pattern == 'weekend' else '' }}>Mostly weekends</option>
+                    <option value="binge" {{ 'selected' if section0 and section0.alcohol_pattern == 'binge' else '' }}>Binge drinking (5+ at once)</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Alcohol Risk</label>
+                <div id="alcohol_risk" class="risk-indicator">--</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: FAMILY & SOCIAL -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-people"></i> Family & Social Context</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="relationship_status" class="form-label">Relationship Status</label>
+                <select class="form-select" id="relationship_status" name="relationship_status">
+                    <option value="">-- Select --</option>
+                    <option value="married" {{ 'selected' if section0 and section0.relationship_status == 'married' else '' }}>Married / Partnered</option>
+                    <option value="single" {{ 'selected' if section0 and section0.relationship_status == 'single' else '' }}>Single</option>
+                    <option value="divorced" {{ 'selected' if section0 and section0.relationship_status == 'divorced' else '' }}>Divorced / Separated</option>
+                    <option value="widowed" {{ 'selected' if section0 and section0.relationship_status == 'widowed' else '' }}>Widowed</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="has_children" class="form-label">Children</label>
+                <select class="form-select" id="has_children" name="has_children">
+                    <option value="">-- Select --</option>
+                    <option value="false" {{ 'selected' if section0 and section0.has_children == False else '' }}>No children</option>
+                    <option value="true" {{ 'selected' if section0 and section0.has_children == True else '' }}>Has children</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="living_situation" class="form-label">Living Situation</label>
+                <select class="form-select" id="living_situation" name="living_situation">
+                    <option value="">-- Select --</option>
+                    <option value="alone" {{ 'selected' if section0 and section0.living_situation == 'alone' else '' }}>Lives alone</option>
+                    <option value="spouse" {{ 'selected' if section0 and section0.living_situation == 'spouse' else '' }}>With spouse/partner</option>
+                    <option value="family" {{ 'selected' if section0 and section0.living_situation == 'family' else '' }}>With extended family</option>
+                    <option value="assisted" {{ 'selected' if section0 and section0.living_situation == 'assisted' else '' }}>Assisted living</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="caregiving_role" class="form-label">Caregiving Responsibilities</label>
+                <select class="form-select" id="caregiving_role" name="caregiving_role">
+                    <option value="">-- Select --</option>
+                    <option value="none" {{ 'selected' if section0 and section0.caregiving_role == 'none' else '' }}>No caregiving</option>
+                    <option value="children" {{ 'selected' if section0 and section0.caregiving_role == 'children' else '' }}>Young children</option>
+                    <option value="parents" {{ 'selected' if section0 and section0.caregiving_role == 'parents' else '' }}>Aging parents</option>
+                    <option value="spouse" {{ 'selected' if section0 and section0.caregiving_role == 'spouse' else '' }}>Spouse with health issues</option>
+                    <option value="multiple" {{ 'selected' if section0 and section0.caregiving_role == 'multiple' else '' }}>Multiple roles</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="children_details" class="form-label">Children Details (ages)</label>
+                <input type="text" class="form-control" id="children_details" name="children_details"
+                       value="{{ section0.children_details if section0 else '' }}"
+                       placeholder="e.g., 2 adult children (28, 25), 1 grandchild">
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: PREGNANCY HISTORY (Females Only) -->
+    <!-- ================================================================= -->
+    {% if patient.sex == 'female' %}
+    <div class="form-section">
+        <h5><i class="bi bi-heart"></i> Pregnancy History</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="pregnancy_count" class="form-label">Number of Pregnancies</label>
+                <input type="number" class="form-control" id="pregnancy_count" name="pregnancy_count"
+                       value="{{ section0.pregnancy_count if section0 else '' }}"
+                       min="0" max="20">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="live_births" class="form-label">Live Births</label>
+                <input type="number" class="form-control" id="live_births" name="live_births"
+                       value="{{ section0.live_births if section0 else '' }}"
+                       min="0" max="20">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="age_first_pregnancy" class="form-label">Age at First Pregnancy</label>
+                <input type="number" class="form-control" id="age_first_pregnancy" name="age_first_pregnancy"
+                       value="{{ section0.age_first_pregnancy if section0 else '' }}"
+                       min="12" max="55">
+            </div>
+            
+            <div class="col-12">
+                <label class="form-label">Pregnancy Complications</label>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="gestational_diabetes" value="true" id="gest_diab"
+                                   {{ 'checked' if section0 and section0.gestational_diabetes else '' }}>
+                            <label class="form-check-label" for="gest_diab">
+                                Gestational Diabetes
+                                <i class="bi bi-exclamation-triangle text-warning" data-bs-toggle="tooltip"
+                                   title="50% risk of Type 2 diabetes within 10 years"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="preeclampsia" value="true" id="preeclampsia"
+                                   {{ 'checked' if section0 and section0.preeclampsia else '' }}>
+                            <label class="form-check-label" for="preeclampsia">
+                                Preeclampsia / Eclampsia
+                                <i class="bi bi-exclamation-triangle text-warning" data-bs-toggle="tooltip"
+                                   title="2-4x increased CVD risk later in life"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="pcos" value="true" id="pcos"
+                                   {{ 'checked' if section0 and section0.pcos else '' }}>
+                            <label class="form-check-label" for="pcos">PCOS</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: INJURIES -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-bandaid"></i> Injuries & Trauma</h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="tbi_history" class="form-label">Traumatic Brain Injury</label>
+                <select class="form-select" id="tbi_history" name="tbi_history">
+                    <option value="">-- Select --</option>
+                    <option value="none" {{ 'selected' if section0 and section0.tbi_history == 'none' else '' }}>None</option>
+                    <option value="single" {{ 'selected' if section0 and section0.tbi_history == 'single' else '' }}>Single concussion</option>
+                    <option value="multiple" {{ 'selected' if section0 and section0.tbi_history == 'multiple' else '' }}>Multiple (2+)</option>
+                    <option value="repeated" {{ 'selected' if section0 and section0.tbi_history == 'repeated' else '' }}>Repeated (sports/occupational)</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="fragility_fracture" class="form-label">Fragility Fracture</label>
+                <select class="form-select" id="fragility_fracture" name="fragility_fracture">
+                    <option value="">-- Select --</option>
+                    <option value="false" {{ 'selected' if section0 and section0.fragility_fracture == False else '' }}>No</option>
+                    <option value="true" {{ 'selected' if section0 and section0.fragility_fracture == True else '' }}>Yes (low-impact fracture)</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4" id="fracture_location_div" style="display: none;">
+                <label for="fracture_location" class="form-label">Fracture Location</label>
+                <input type="text" class="form-control" id="fracture_location" name="fracture_location"
+                       value="{{ section0.fracture_location if section0 else '' }}"
+                       placeholder="e.g., Hip, Wrist, Spine">
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: FAMILY HISTORY -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-diagram-3"></i> Family Health History</h5>
+        
+        <!-- Father -->
+        <div class="mb-4">
+            <h6 class="text-secondary">Father</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="father_status" class="form-label">Status</label>
+                    <select class="form-select" id="father_status" name="father_status">
+                        <option value="">-- Select --</option>
+                        <option value="living" {{ 'selected' if family_history and family_history.father_status == 'living' else '' }}>Living</option>
+                        <option value="deceased" {{ 'selected' if family_history and family_history.father_status == 'deceased' else '' }}>Deceased</option>
+                        <option value="unknown" {{ 'selected' if family_history and family_history.father_status == 'unknown' else '' }}>Unknown</option>
+                    </select>
+                </div>
+                <div class="col-md-3" id="father_living_age" style="display: none;">
+                    <label for="father_current_age" class="form-label">Current Age</label>
+                    <input type="number" class="form-control" id="father_current_age" name="father_current_age"
+                           value="{{ family_history.father_current_age if family_history else '' }}"
+                           min="30" max="120">
+                </div>
+                <div class="col-md-3" id="father_death_age" style="display: none;">
+                    <label for="father_age_at_death" class="form-label">Age at Death</label>
+                    <input type="number" class="form-control" id="father_age_at_death" name="father_age_at_death"
+                           value="{{ family_history.father_age_at_death if family_history else '' }}"
+                           min="0" max="120">
+                </div>
+                <div class="col-md-3" id="father_cause_death" style="display: none;">
+                    <label for="father_cause_of_death" class="form-label">Cause of Death</label>
+                    <input type="text" class="form-control" id="father_cause_of_death" name="father_cause_of_death"
+                           value="{{ family_history.father_cause_of_death if family_history else '' }}"
+                           placeholder="e.g., Heart attack">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Father's Conditions</label>
+                    <div class="row">
+                        {% set fc = family_history.father_conditions if family_history and family_history.father_conditions else {} %}
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="father_heart_disease" value="true" id="father_hd"
+                                       {{ 'checked' if fc.get('heart_disease') else '' }}>
+                                <label class="form-check-label" for="father_hd">Heart Disease</label>
+                            </div>
+                            <input type="number" class="form-control form-control-sm mt-1" name="father_heart_disease_age"
+                                   value="{{ fc.get('heart_disease_age', '') }}"
+                                   placeholder="Age of onset" style="display: none;" id="father_hd_age">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="father_stroke" value="true" id="father_stroke"
+                                       {{ 'checked' if fc.get('stroke') else '' }}>
+                                <label class="form-check-label" for="father_stroke">Stroke</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="father_diabetes" value="true" id="father_diab"
+                                       {{ 'checked' if fc.get('diabetes') else '' }}>
+                                <label class="form-check-label" for="father_diab">Diabetes</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="father_dementia" value="true" id="father_dem"
+                                       {{ 'checked' if fc.get('dementia') else '' }}>
+                                <label class="form-check-label" for="father_dem">Dementia</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mother -->
+        <div class="mb-4">
+            <h6 class="text-secondary">Mother</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="mother_status" class="form-label">Status</label>
+                    <select class="form-select" id="mother_status" name="mother_status">
+                        <option value="">-- Select --</option>
+                        <option value="living" {{ 'selected' if family_history and family_history.mother_status == 'living' else '' }}>Living</option>
+                        <option value="deceased" {{ 'selected' if family_history and family_history.mother_status == 'deceased' else '' }}>Deceased</option>
+                        <option value="unknown" {{ 'selected' if family_history and family_history.mother_status == 'unknown' else '' }}>Unknown</option>
+                    </select>
+                </div>
+                <div class="col-md-3" id="mother_living_age" style="display: none;">
+                    <label for="mother_current_age" class="form-label">Current Age</label>
+                    <input type="number" class="form-control" id="mother_current_age" name="mother_current_age"
+                           value="{{ family_history.mother_current_age if family_history else '' }}"
+                           min="30" max="120">
+                </div>
+                <div class="col-md-3" id="mother_death_age" style="display: none;">
+                    <label for="mother_age_at_death" class="form-label">Age at Death</label>
+                    <input type="number" class="form-control" id="mother_age_at_death" name="mother_age_at_death"
+                           value="{{ family_history.mother_age_at_death if family_history else '' }}"
+                           min="0" max="120">
+                </div>
+                <div class="col-md-3" id="mother_cause_death" style="display: none;">
+                    <label for="mother_cause_of_death" class="form-label">Cause of Death</label>
+                    <input type="text" class="form-control" id="mother_cause_of_death" name="mother_cause_of_death"
+                           value="{{ family_history.mother_cause_of_death if family_history else '' }}"
+                           placeholder="e.g., Cancer">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Mother's Conditions</label>
+                    <div class="row">
+                        {% set mc = family_history.mother_conditions if family_history and family_history.mother_conditions else {} %}
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="mother_heart_disease" value="true" id="mother_hd"
+                                       {{ 'checked' if mc.get('heart_disease') else '' }}>
+                                <label class="form-check-label" for="mother_hd">Heart Disease</label>
+                            </div>
+                            <input type="number" class="form-control form-control-sm mt-1" name="mother_heart_disease_age"
+                                   value="{{ mc.get('heart_disease_age', '') }}"
+                                   placeholder="Age of onset" style="display: none;" id="mother_hd_age">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="mother_stroke" value="true" id="mother_stroke"
+                                       {{ 'checked' if mc.get('stroke') else '' }}>
+                                <label class="form-check-label" for="mother_stroke">Stroke</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="mother_diabetes" value="true" id="mother_diab"
+                                       {{ 'checked' if mc.get('diabetes') else '' }}>
+                                <label class="form-check-label" for="mother_diab">Diabetes</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="mother_breast_cancer" value="true" id="mother_bc"
+                                       {{ 'checked' if mc.get('breast_cancer') else '' }}>
+                                <label class="form-check-label" for="mother_bc">Breast Cancer</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grandparents Longevity (Optional) -->
+        <div class="mb-3">
+            <h6 class="text-secondary">Grandparents Longevity (Optional)</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Paternal Grandfather</label>
+                    <input type="number" class="form-control" name="grandfather_paternal_age"
+                           value="{{ family_history.grandfather_paternal_age if family_history else '' }}"
+                           min="30" max="120" placeholder="Age at death">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Paternal Grandmother</label>
+                    <input type="number" class="form-control" name="grandmother_paternal_age"
+                           value="{{ family_history.grandmother_paternal_age if family_history else '' }}"
+                           min="30" max="120" placeholder="Age at death">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Maternal Grandfather</label>
+                    <input type="number" class="form-control" name="grandfather_maternal_age"
+                           value="{{ family_history.grandfather_maternal_age if family_history else '' }}"
+                           min="30" max="120" placeholder="Age at death">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Maternal Grandmother</label>
+                    <input type="number" class="form-control" name="grandmother_maternal_age"
+                           value="{{ family_history.grandmother_maternal_age if family_history else '' }}"
+                           min="30" max="120" placeholder="Age at death">
+                </div>
+                <div class="col-md-6">
+                    <label for="exceptional_longevity" class="form-label">Exceptional Longevity in Family</label>
+                    <select class="form-select" id="exceptional_longevity" name="exceptional_longevity">
+                        <option value="">-- Select --</option>
+                        <option value="none" {{ 'selected' if family_history and family_history.exceptional_longevity == 'none' else '' }}>No relatives lived to 90+</option>
+                        <option value="one_90_94" {{ 'selected' if family_history and family_history.exceptional_longevity == 'one_90_94' else '' }}>1-2 relatives lived to 90-94</option>
+                        <option value="one_95plus" {{ 'selected' if family_history and family_history.exceptional_longevity == 'one_95plus' else '' }}>1+ relatives lived to 95+</option>
+                        <option value="multiple_95plus" {{ 'selected' if family_history and family_history.exceptional_longevity == 'multiple_95plus' else '' }}>Multiple relatives lived to 95+</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- SECTION: MOTIVATIONS (Optional) -->
+    <!-- ================================================================= -->
+    <div class="form-section">
+        <h5><i class="bi bi-star"></i> Health Motivations (Optional)</h5>
+        
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">What motivates you to optimize your health?</label>
+                <div class="row">
+                    {% set motives = section0.motivations if section0 and section0.motivations else [] %}
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="children" id="mot_children"
+                                   {{ 'checked' if 'children' in motives else '' }}>
+                            <label class="form-check-label" for="mot_children">Be there for children/grandchildren</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="independence" id="mot_indep"
+                                   {{ 'checked' if 'independence' in motives else '' }}>
+                            <label class="form-check-label" for="mot_indep">Maintain independence</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="active_retirement" id="mot_retire"
+                                   {{ 'checked' if 'active_retirement' in motives else '' }}>
+                            <label class="form-check-label" for="mot_retire">Active retirement/travel</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="avoid_parents" id="mot_avoid"
+                                   {{ 'checked' if 'avoid_parents' in motives else '' }}>
+                            <label class="form-check-label" for="mot_avoid">Avoid parents' health problems</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="fitness" id="mot_fit"
+                                   {{ 'checked' if 'fitness' in motives else '' }}>
+                            <label class="form-check-label" for="mot_fit">Athletic/fitness performance</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="motivations" value="cognitive" id="mot_cog"
+                                   {{ 'checked' if 'cognitive' in motives else '' }}>
+                            <label class="form-check-label" for="mot_cog">Cognitive sharpness</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <label for="personal_goal" class="form-label">Personal Health Goal</label>
+                <textarea class="form-control" id="personal_goal" name="personal_goal" rows="2"
+                          placeholder="e.g., 'Run a marathon at 60', 'Play actively with grandchildren'">{{ section0.personal_goal if section0 else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================= -->
+    <!-- CALCULATED RISK MODIFIERS SUMMARY -->
+    <!-- ================================================================= -->
+    {% if section0 %}
+    <div class="form-section bg-light">
+        <h5><i class="bi bi-calculator"></i> Calculated Risk Summary</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Functional Age Modifier</h6>
+                        <h3 class="{{ 'text-success' if section0.functional_age_modifier and section0.functional_age_modifier < 0 else 'text-danger' if section0.functional_age_modifier and section0.functional_age_modifier > 0 else '' }}">
+                            {{ '%+d' % section0.functional_age_modifier if section0.functional_age_modifier else '0' }} years
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Polypharmacy Level</h6>
+                        <h5>{{ section0.polypharmacy_level }}</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Family Longevity</h6>
+                        <h5>{{ '%+d' % family_history.longevity_modifier if family_history and family_history.longevity_modifier else '0' }} years</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ================================================================= -->
+    <!-- SAVE BUTTONS -->
+    <!-- ================================================================= -->
+    <div class="sticky-save-bar">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <span class="text-muted">
+                    <i class="bi bi-info-circle"></i> All changes are saved when you click a button below
+                </span>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <button type="submit" name="save_action" value="save" class="btn btn-outline-primary">
+                    <i class="bi bi-save"></i> Save Draft
+                </button>
+                <button type="submit" name="save_action" value="save_continue" class="btn btn-primary">
+                    <i class="bi bi-arrow-right-circle"></i> Save & Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+    
+    // =========================================================
+    // BMI AUTO-CALCULATION
+    // =========================================================
+    const heightInput = document.getElementById('height_cm');
+    const weightInput = document.getElementById('weight_kg');
+    const bmiDisplay = document.getElementById('bmi_display');
+    const bmiCategory = document.getElementById('bmi_category');
+    
+    function calculateBMI() {
+        const height = parseFloat(heightInput.value);
+        const weight = parseFloat(weightInput.value);
+        
+        if (height && weight && height > 0) {
+            const heightM = height / 100;
+            const bmi = weight / (heightM * heightM);
+            bmiDisplay.value = bmi.toFixed(1);
+            bmiDisplay.classList.add('auto-calculated');
+            setTimeout(() => bmiDisplay.classList.remove('auto-calculated'), 1000);
+            
+            // Category (Asia-Pacific cutoffs)
+            let category = '';
+            if (bmi < 18.5) category = 'Underweight';
+            else if (bmi < 23) category = 'Normal';
+            else if (bmi < 25) category = 'Overweight';
+            else if (bmi < 30) category = 'Obese Class I';
+            else category = 'Obese Class II+';
+            
+            bmiCategory.textContent = category;
+        }
+    }
+    
+    heightInput.addEventListener('input', calculateBMI);
+    weightInput.addEventListener('input', calculateBMI);
+    
+    // =========================================================
+    // WAIST-HIP RATIO CALCULATION
+    // =========================================================
+    const waistInput = document.getElementById('waist_circumference_cm');
+    const hipInput = document.getElementById('hip_circumference_cm');
+    const whrDisplay = document.getElementById('whr_display');
+    const waistRisk = document.getElementById('waist_risk');
+    const patientSex = '{{ patient.sex }}';
+    
+    function calculateWHR() {
+        const waist = parseFloat(waistInput.value);
+        const hip = parseFloat(hipInput.value);
+        
+        if (waist && hip && hip > 0) {
+            const whr = waist / hip;
+            whrDisplay.value = whr.toFixed(2);
+        }
+        
+        // Waist risk
+        if (waist) {
+            let risk = '';
+            if (patientSex === 'male') {
+                if (waist < 90) risk = 'Low';
+                else if (waist <= 102) risk = 'Increased';
+                else risk = 'Substantially Increased';
+            } else {
+                if (waist < 80) risk = 'Low';
+                else if (waist <= 88) risk = 'Increased';
+                else risk = 'Substantially Increased';
+            }
+            waistRisk.textContent = risk;
+            waistRisk.className = 'risk-indicator ' + 
+                (risk === 'Low' ? 'risk-low' : risk === 'Increased' ? 'risk-moderate' : 'risk-high');
+        }
+    }
+    
+    waistInput.addEventListener('input', calculateWHR);
+    hipInput.addEventListener('input', calculateWHR);
+    
+    // =========================================================
+    // BLOOD PRESSURE AUTO-AVERAGE
+    // =========================================================
+    const bpSys1 = document.getElementById('bp_systolic_1');
+    const bpDia1 = document.getElementById('bp_diastolic_1');
+    const bpSys2 = document.getElementById('bp_systolic_2');
+    const bpDia2 = document.getElementById('bp_diastolic_2');
+    const bpAvgDisplay = document.getElementById('bp_avg_display');
+    const bpClassification = document.getElementById('bp_classification');
+    
+    function calculateBPAverage() {
+        const sys1 = parseInt(bpSys1.value) || 0;
+        const dia1 = parseInt(bpDia1.value) || 0;
+        const sys2 = parseInt(bpSys2.value) || 0;
+        const dia2 = parseInt(bpDia2.value) || 0;
+        
+        let sysAvg, diaAvg;
+        
+        if (sys1 && sys2) {
+            sysAvg = Math.round((sys1 + sys2) / 2);
+        } else if (sys1) {
+            sysAvg = sys1;
+        }
+        
+        if (dia1 && dia2) {
+            diaAvg = Math.round((dia1 + dia2) / 2);
+        } else if (dia1) {
+            diaAvg = dia1;
+        }
+        
+        if (sysAvg && diaAvg) {
+            bpAvgDisplay.value = sysAvg + '/' + diaAvg;
+            
+            // Classification
+            let classification = '';
+            if (sysAvg > 180 || diaAvg > 120) {
+                classification = 'Hypertensive Crisis';
+                bpClassification.className = 'fw-bold risk-indicator risk-high';
+            } else if (sysAvg >= 140 || diaAvg >= 90) {
+                classification = 'Stage 2 HTN';
+                bpClassification.className = 'fw-bold risk-indicator risk-high';
+            } else if (sysAvg >= 130 || diaAvg >= 80) {
+                classification = 'Stage 1 HTN';
+                bpClassification.className = 'fw-bold risk-indicator risk-moderate';
+            } else if (sysAvg >= 120) {
+                classification = 'Elevated';
+                bpClassification.className = 'fw-bold risk-indicator risk-moderate';
+            } else {
+                classification = 'Normal';
+                bpClassification.className = 'fw-bold risk-indicator risk-low';
+            }
+            bpClassification.textContent = classification;
+        }
+    }
+    
+    [bpSys1, bpDia1, bpSys2, bpDia2].forEach(el => {
+        el.addEventListener('input', calculateBPAverage);
+    });
+    
+    // =========================================================
+    // SMOKING CONDITIONAL FIELDS
+    // =========================================================
+    const smokingStatus = document.getElementById('smoking_status');
+    const smokingDetails = document.getElementById('smoking_details');
+    const cigsPerDay = document.getElementById('cigarettes_per_day');
+    const yearsSmoked = document.getElementById('years_smoked');
+    const packYears = document.getElementById('pack_years');
+    
+    function toggleSmokingDetails() {
+        const status = smokingStatus.value;
+        if (status && status !== 'never') {
+            smokingDetails.style.display = 'block';
+        } else {
+            smokingDetails.style.display = 'none';
+        }
+    }
+    
+    function calculatePackYears() {
+        const cigs = parseFloat(cigsPerDay.value) || 0;
+        const years = parseFloat(yearsSmoked.value) || 0;
+        
+        if (cigs && years) {
+            const py = (cigs / 20) * years;
+            packYears.value = py.toFixed(1);
+        }
+    }
+    
+    smokingStatus.addEventListener('change', toggleSmokingDetails);
+    cigsPerDay.addEventListener('input', calculatePackYears);
+    yearsSmoked.addEventListener('input', calculatePackYears);
+    
+    // Initialize on load
+    toggleSmokingDetails();
+    
+    // =========================================================
+    // FRAGILITY FRACTURE CONDITIONAL
+    // =========================================================
+    const fragilityFracture = document.getElementById('fragility_fracture');
+    const fractureLocationDiv = document.getElementById('fracture_location_div');
+    
+    fragilityFracture.addEventListener('change', function() {
+        fractureLocationDiv.style.display = this.value === 'true' ? 'block' : 'none';
+    });
+    
+    // Initialize
+    if (fragilityFracture.value === 'true') {
+        fractureLocationDiv.style.display = 'block';
+    }
+    
+    // =========================================================
+    // FAMILY HISTORY CONDITIONAL FIELDS
+    // =========================================================
+    function setupParentStatusToggle(parent) {
+        const statusSelect = document.getElementById(parent + '_status');
+        const livingAge = document.getElementById(parent + '_living_age');
+        const deathAge = document.getElementById(parent + '_death_age');
+        const causeDeath = document.getElementById(parent + '_cause_death');
+        
+        function toggle() {
+            const status = statusSelect.value;
+            livingAge.style.display = status === 'living' ? 'block' : 'none';
+            deathAge.style.display = status === 'deceased' ? 'block' : 'none';
+            causeDeath.style.display = status === 'deceased' ? 'block' : 'none';
+        }
+        
+        statusSelect.addEventListener('change', toggle);
+        toggle(); // Initialize
+    }
+    
+    setupParentStatusToggle('father');
+    setupParentStatusToggle('mother');
+    
+    // Heart disease age of onset toggle
+    document.getElementById('father_hd').addEventListener('change', function() {
+        document.getElementById('father_hd_age').style.display = this.checked ? 'block' : 'none';
+    });
+    document.getElementById('mother_hd').addEventListener('change', function() {
+        document.getElementById('mother_hd_age').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // =========================================================
+    // ALCOHOL RISK INDICATOR
+    // =========================================================
+    const alcoholDrinks = document.getElementById('alcohol_drinks_per_week');
+    const alcoholPattern = document.getElementById('alcohol_pattern');
+    const alcoholRisk = document.getElementById('alcohol_risk');
+    
+    function updateAlcoholRisk() {
+        const drinks = parseInt(alcoholDrinks.value) || 0;
+        const pattern = alcoholPattern.value;
+        
+        let risk = '';
+        const heavyThreshold = patientSex === 'male' ? 15 : 11;
+        
+        if (pattern === 'binge') {
+            risk = 'High (Binge)';
+            alcoholRisk.className = 'risk-indicator risk-high';
+        } else if (drinks >= heavyThreshold) {
+            risk = 'Heavy';
+            alcoholRisk.className = 'risk-indicator risk-high';
+        } else if (drinks >= 8) {
+            risk = 'Moderate';
+            alcoholRisk.className = 'risk-indicator risk-moderate';
+        } else if (drinks >= 1) {
+            risk = 'Light';
+            alcoholRisk.className = 'risk-indicator risk-low';
+        } else {
+            risk = 'None';
+            alcoholRisk.className = 'risk-indicator';
+        }
+        
+        alcoholRisk.textContent = risk;
+    }
+    
+    alcoholDrinks.addEventListener('input', updateAlcoholRisk);
+    alcoholPattern.addEventListener('change', updateAlcoholRisk);
+    
+    // =========================================================
+    // FORM VALIDATION
+    // =========================================================
+    document.getElementById('section0Form').addEventListener('submit', function(e) {
+        const height = parseFloat(heightInput.value);
+        const weight = parseFloat(weightInput.value);
+        
+        let errors = [];
+        
+        if (!height || height < 120 || height > 220) {
+            errors.push('Height must be between 120-220 cm');
+        }
+        
+        if (!weight || weight < 30 || weight > 250) {
+            errors.push('Weight must be between 30-250 kg');
+        }
+        
+        if (errors.length > 0) {
+            e.preventDefault();
+            alert('Validation errors:\n\n' + errors.join('\n'));
+        }
+    });
+});
+</script>
+{% endblock %}

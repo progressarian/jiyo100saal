@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment | {{ assessment.patient.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Patient Info Bar -->
+<div class="patient-info-bar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h4><i class="bi bi-person-circle"></i> {{ assessment.patient.full_name }}</h4>
+            <span class="badge bg-light text-dark me-2">Age: {{ assessment.age_at_assessment }} years</span>
+            <span class="badge bg-light text-dark me-2">{{ assessment.patient.sex|capitalize }}</span>
+            <span class="badge bg-{{ 'success' if assessment.status == 'completed' else 'warning' }}">
+                {{ assessment.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <small>{{ assessment.assessment_date.strftime('%B %d, %Y') }}</small>
+            {% if assessment.clinician_name %}
+            <br><small>Clinician: {{ assessment.clinician_name }}</small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Assessment Sections -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Assessment Sections</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <!-- Section 0 -->
+                    <a href="{{ url_for('section0.section0_form', assessment_id=assessment.id) }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Section 0: Baseline Health & Context</h6>
+                            <small class="text-muted">Demographics, vitals, medications, family history</small>
+                        </div>
+                        {% if assessment.section0_results %}
+                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                        {% else %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Section 1 -->
+                    <a href="{{ url_for('section1.section1_form', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}">
+                        <div>
+                            <h6 class="mb-0">Section 1: Body Composition</h6>
+                            <small class="text-muted">DEXA, BIA, or manual measurements</small>
+                        </div>
+                        {% if assessment.section1_results %}
+                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> Complete</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Pillar 1 -->
+                    <a href="{{ url_for('pillar1.overview', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}">
+                        <div>
+                            <h6 class="mb-0">Pillar 1: Movement & Strength</h6>
+                            <small class="text-muted">8 physical performance tests (20 points)</small>
+                        </div>
+                        {% if assessment.pillar1_results and assessment.pillar1_results.pillar1_total %}
+                        <span class="badge bg-success"><i class="bi bi-check-lg"></i> {{ assessment.pillar1_results.pillar1_total }}/20</span>
+                        {% elif assessment.pillar1_results %}
+                        <span class="badge bg-info"><i class="bi bi-pencil"></i> In Progress</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Pillar 2 -->
+                    <a href="{{ url_for('pillar2.overview', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}"
+                       style="border-left: 4px solid #7c3aed;">
+                        <div>
+                            <h6 class="mb-0"><i class="bi bi-brain" style="color: #7c3aed;"></i> Pillar 2: Cognitive Function</h6>
+                            <small class="text-muted">4 cognitive tests (10 points)</small>
+                        </div>
+                        {% if assessment.pillar2_results and assessment.pillar2_results.pillar2_total %}
+                        <span class="badge" style="background-color: #7c3aed;"><i class="bi bi-check-lg"></i> {{ assessment.pillar2_results.pillar2_total }}/10</span>
+                        {% elif assessment.pillar2_results %}
+                        <span class="badge bg-info"><i class="bi bi-pencil"></i> In Progress</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Pillar 3 -->
+                    <a href="{{ url_for('pillar3.overview', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}"
+                       style="border-left: 4px solid #3498db;">
+                        <div>
+                            <h6 class="mb-0"><i class="bi bi-heart-pulse" style="color: #3498db;"></i> Pillar 3: Metabolic & Digestive Health</h6>
+                            <small class="text-muted">5 tests: Glucose, Digestive, Gut, Liver, Inflammation (20 points)</small>
+                        </div>
+                        {% if assessment.pillar3_results and assessment.pillar3_results.pillar3_total %}
+                        <span class="badge" style="background-color: #3498db;"><i class="bi bi-check-lg"></i> {{ assessment.pillar3_results.pillar3_total }}/20</span>
+                        {% elif assessment.pillar3_results %}
+                        <span class="badge bg-info"><i class="bi bi-pencil"></i> In Progress</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Pillar 4 -->
+                    <a href="{{ url_for('pillar4.overview', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}"
+                       style="border-left: 4px solid #8e44ad;">
+                        <div>
+                            <h6 class="mb-0"><i class="bi bi-activity" style="color: #8e44ad;"></i> Pillar 4: Vitality & Hormones</h6>
+                            <small class="text-muted">9 tests: Thyroid, Hormones, Vitamin D, Sleep, Exercise (20 points)</small>
+                        </div>
+                        {% if assessment.pillar4_results and assessment.pillar4_results.pillar4_total %}
+                        <span class="badge" style="background-color: #8e44ad;"><i class="bi bi-check-lg"></i> {{ assessment.pillar4_results.pillar4_total }}/20</span>
+                        {% elif assessment.pillar4_results %}
+                        <span class="badge bg-info"><i class="bi bi-pencil"></i> In Progress</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Pillar 5 -->
+                    <a href="{{ url_for('pillar5.overview', assessment_id=assessment.id) if assessment.section0_results else '#' }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'disabled' if not assessment.section0_results else '' }}"
+                       style="border-left: 4px solid #16a085;">
+                        <div>
+                            <h6 class="mb-0"><i class="bi bi-shield-check" style="color: #16a085;"></i> Pillar 5: Disease Prevention & Clinical Biomarkers</h6>
+                            <small class="text-muted">9 tests: Lipids, Cardiac, Kidney, Cancer Screening (20 points)</small>
+                        </div>
+                        {% if assessment.pillar5_results and assessment.pillar5_results.pillar5_total %}
+                        <span class="badge" style="background-color: #16a085;"><i class="bi bi-check-lg"></i> {{ assessment.pillar5_results.pillar5_total }}/20</span>
+                        {% elif assessment.pillar5_results %}
+                        <span class="badge bg-info"><i class="bi bi-pencil"></i> In Progress</span>
+                        {% elif assessment.section0_results %}
+                        <span class="badge bg-warning"><i class="bi bi-arrow-right"></i> Start</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Locked</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 0 Summary (if complete) -->
+        {% if assessment.section0_results %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Section 0 Summary</h5>
+            </div>
+            <div class="card-body">
+                {% set s0 = assessment.section0_results %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Anthropometrics</h6>
+                        <p class="mb-1">Height: {{ s0.height_cm }} cm</p>
+                        <p class="mb-1">Weight: {{ s0.weight_kg }} kg</p>
+                        <p class="mb-1">BMI: {{ s0.bmi }} ({{ s0.bmi_category }})</p>
+                        {% if s0.waist_circumference_cm %}
+                        <p class="mb-1">Waist: {{ s0.waist_circumference_cm }} cm</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Vital Signs</h6>
+                        <p class="mb-1">BP: {{ s0.bp_systolic_avg }}/{{ s0.bp_diastolic_avg }} mmHg</p>
+                        <p class="mb-1">Classification: {{ s0.bp_classification }}</p>
+                        {% if s0.resting_heart_rate %}
+                        <p class="mb-1">HR: {{ s0.resting_heart_rate }} bpm</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Risk Modifiers</h6>
+                        <p class="mb-1">Medications: {{ s0.polypharmacy_level }}</p>
+                        <p class="mb-1">Smoking: {{ s0.smoking_status|default('Not specified') }}</p>
+                        <p class="mb-1 fw-bold">
+                            Functional Age Modifier: 
+                            <span class="{{ 'text-success' if s0.functional_age_modifier and s0.functional_age_modifier < 0 else 'text-danger' if s0.functional_age_modifier and s0.functional_age_modifier > 0 else '' }}">
+                                {{ '%+d' % s0.functional_age_modifier if s0.functional_age_modifier else '0' }} years
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Functional Age Widget -->
+        {% if functional_age is not none and age_difference is not none %}
+        <div class="functional-age-widget" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin: 30px 0; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+          
+          <!-- Main Age Display -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="font-size: 2.5em; margin-bottom: 10px;">Your Functional Age</h2>
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0;">
+              <div>
+                <div style="font-size: 1.2em; opacity: 0.9;">Chronological Age</div>
+                <div style="font-size: 3em; font-weight: bold;">{{ chronological_age }}</div>
+                <div style="opacity: 0.8;">years</div>
+              </div>
+              
+              <div style="font-size: 3em;">→</div>
+              
+              <div>
+                <div style="font-size: 1.2em; opacity: 0.9;">Functional Age</div>
+                <div style="font-size: 3em; font-weight: bold;">{{ functional_age }}</div>
+                <div style="opacity: 0.8;">years</div>
+              </div>
+            </div>
+            
+            <div style="font-size: 1.5em; margin-top: 20px;">
+              {% if age_difference < 0 %}
+                <span style="background: #10b981; padding: 10px 20px; border-radius: 10px; font-weight: bold;">
+                  {{ age_difference|abs }} YEARS YOUNGER! 🎉
+                </span>
+              {% elif age_difference > 0 %}
+                <span style="background: #ef4444; padding: 10px 20px; border-radius: 10px; font-weight: bold;">
+                  {{ age_difference }} years older
+                </span>
+              {% else %}
+                <span style="background: #3b82f6; padding: 10px 20px; border-radius: 10px; font-weight: bold;">
+                  Right on track
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Pillar Breakdown -->
+          <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; margin: 20px 0;">
+            <h3 style="font-size: 1.8em; margin-bottom: 20px; text-align: center;">Impact by Health Pillar</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              
+              {% if assessment.pillar1_results and assessment.pillar1_results.functional_age_impact %}
+              <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">💪 Movement & Strength</div>
+                <div style="font-size: 1.3em;">
+                  {% if assessment.pillar1_results.functional_age_impact < 0 %}
+                    <span style="color: #10b981;">{{ assessment.pillar1_results.functional_age_impact }} years</span>
+                  {% else %}
+                    <span style="color: #fbbf24;">+{{ assessment.pillar1_results.functional_age_impact }} years</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              
+              {% if assessment.pillar2_results and assessment.pillar2_results.functional_age_modifier %}
+              <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">🧠 Cognitive Function</div>
+                <div style="font-size: 1.3em;">
+                  {% if assessment.pillar2_results.functional_age_modifier < 0 %}
+                    <span style="color: #10b981;">{{ assessment.pillar2_results.functional_age_modifier }} years</span>
+                  {% else %}
+                    <span style="color: #fbbf24;">+{{ assessment.pillar2_results.functional_age_modifier }} years</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              
+              {% if assessment.pillar3_results and assessment.pillar3_results.functional_age_modifier %}
+              <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">🔬 Metabolic Health</div>
+                <div style="font-size: 1.3em;">
+                  {% if assessment.pillar3_results.functional_age_modifier < 0 %}
+                    <span style="color: #10b981;">{{ assessment.pillar3_results.functional_age_modifier }} years</span>
+                  {% else %}
+                    <span style="color: #fbbf24;">+{{ assessment.pillar3_results.functional_age_modifier }} years</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              
+              {% if assessment.pillar4_results and assessment.pillar4_results.functional_age_modifier %}
+              <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">💜 Vitality & Hormones</div>
+                <div style="font-size: 1.3em;">
+                  {% if assessment.pillar4_results.functional_age_modifier < 0 %}
+                    <span style="color: #10b981;">{{ assessment.pillar4_results.functional_age_modifier }} years</span>
+                  {% else %}
+                    <span style="color: #fbbf24;">+{{ assessment.pillar4_results.functional_age_modifier }} years</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              
+              {% if assessment.pillar5_results and assessment.pillar5_results.functional_age_modifier %}
+              <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">🏥 Disease Prevention</div>
+                <div style="font-size: 1.3em;">
+                  {% if assessment.pillar5_results.functional_age_modifier < 0 %}
+                    <span style="color: #10b981;">{{ assessment.pillar5_results.functional_age_modifier }} years</span>
+                  {% else %}
+                    <span style="color: #fbbf24;">+{{ assessment.pillar5_results.functional_age_modifier }} years</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              
+            </div>
+          </div>
+          
+          <!-- Top Recommendations -->
+          {% if top_recommendations %}
+          <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px;">
+            <h3 style="font-size: 1.8em; margin-bottom: 20px; text-align: center;">🎯 Top 3 Priorities</h3>
+            <ol style="font-size: 1.2em; line-height: 1.8;">
+              {% for recommendation in top_recommendations %}
+              <li style="margin-bottom: 10px;">{{ recommendation }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+          {% endif %}
+          
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Progress Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Progress</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: {{ assessment.completion_percentage }}%;"
+                         aria-valuenow="{{ assessment.completion_percentage }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        {{ assessment.completion_percentage|round(0)|int }}%
+                    </div>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    <li>{{ '✅' if assessment.section0_results else '⬜' }} Section 0</li>
+                    <li>{{ '✅' if assessment.section1_results else '⬜' }} Section 1</li>
+                    <li>{{ '✅' if assessment.pillar1_results else '⬜' }} Pillar 1</li>
+                    <li>{{ '✅' if assessment.pillar2_results else '⬜' }} Pillar 2</li>
+                    <li>{{ '✅' if assessment.pillar3_results else '⬜' }} Pillar 3</li>
+                    <li>{{ '✅' if assessment.pillar4_results else '⬜' }} Pillar 4</li>
+                    <li>{{ '✅' if assessment.pillar5_results else '⬜' }} Pillar 5</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Scores Card (if available) -->
+        {% if assessment.pillar1_total_score or (assessment.pillar2_results and assessment.pillar2_results.pillar2_total) or (assessment.pillar3_results and assessment.pillar3_results.pillar3_total) or (assessment.pillar4_results and assessment.pillar4_results.pillar4_total) or (assessment.pillar5_results and assessment.pillar5_results.pillar5_total) %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-star"></i> Scores</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if assessment.pillar1_total_score %}
+                <h2 class="mb-0 text-primary">{{ assessment.pillar1_total_score }}/20</h2>
+                <p class="text-muted">Pillar 1: Movement & Strength</p>
+                {% endif %}
+                
+                {% if assessment.pillar2_results and assessment.pillar2_results.pillar2_total %}
+                {% if assessment.pillar1_total_score %}<hr>{% endif %}
+                <h2 class="mb-0" style="color: #7c3aed;">{{ assessment.pillar2_results.pillar2_total }}/10</h2>
+                <p class="text-muted">Pillar 2: Cognitive Function</p>
+                {% endif %}
+                
+                {% if assessment.pillar3_results and assessment.pillar3_results.pillar3_total %}
+                {% if assessment.pillar1_total_score or (assessment.pillar2_results and assessment.pillar2_results.pillar2_total) %}<hr>{% endif %}
+                <h2 class="mb-0" style="color: #3498db;">{{ assessment.pillar3_results.pillar3_total }}/20</h2>
+                <p class="text-muted">Pillar 3: Metabolic & Digestive Health</p>
+                {% endif %}
+                
+                {% if assessment.pillar4_results and assessment.pillar4_results.pillar4_total %}
+                {% if assessment.pillar1_total_score or (assessment.pillar2_results and assessment.pillar2_results.pillar2_total) or (assessment.pillar3_results and assessment.pillar3_results.pillar3_total) %}<hr>{% endif %}
+                <h2 class="mb-0" style="color: #8e44ad;">{{ assessment.pillar4_results.pillar4_total }}/20</h2>
+                <p class="text-muted">Pillar 4: Vitality & Hormones</p>
+                {% endif %}
+                
+                {% if assessment.pillar5_results and assessment.pillar5_results.pillar5_total %}
+                {% if assessment.pillar1_total_score or (assessment.pillar2_results and assessment.pillar2_results.pillar2_total) or (assessment.pillar3_results and assessment.pillar3_results.pillar3_total) or (assessment.pillar4_results and assessment.pillar4_results.pillar4_total) %}<hr>{% endif %}
+                <h2 class="mb-0" style="color: #16a085;">{{ assessment.pillar5_results.pillar5_total }}/20</h2>
+                <p class="text-muted">Pillar 5: Disease Prevention</p>
+                {% endif %}
+                
+                {% if assessment.functional_age %}
+                <hr>
+                <h3 class="mb-0">{{ assessment.functional_age }} years</h3>
+                <p class="text-muted">Functional Age</p>
+                <p class="{{ 'text-success' if assessment.functional_age_delta < 0 else 'text-danger' if assessment.functional_age_delta > 0 else '' }}">
+                    {{ '%+d' % assessment.functional_age_delta if assessment.functional_age_delta else '0' }} years vs chronological
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('patients.view_patient', patient_id=assessment.patient_id) }}" 
+                   class="btn btn-outline-secondary w-100 mb-2">
+                    <i class="bi bi-arrow-left"></i> Back to Patient
+                </a>
+                
+                <!-- Generate Report Button -->
+                {% if assessment.section0_results %}
+                <a href="{{ url_for('reports.generate_report', assessment_id=assessment.id) }}" 
+                   class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-file-pdf"></i> Generate PDF Report
+                </a>
+                {% else %}
+                <button class="btn btn-secondary w-100 mb-2" disabled>
+                    <i class="bi bi-file-pdf"></i> Generate Report
+                    <small class="d-block">Complete Section 0 first</small>
+                </button>
+                {% endif %}
+                
+                {% if assessment.status == 'in_progress' and assessment.is_complete %}
+                <form method="POST" action="{{ url_for('assessments.complete_assessment', assessment_id=assessment.id) }}">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Mark Complete
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
