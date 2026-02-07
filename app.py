@@ -8,7 +8,7 @@ Main Flask Application
 from flask import Flask, render_template, redirect, url_for
 from config import get_config
 from models.base import db
-
+import os
 
 def create_app(config_name: str = None) -> Flask:
     """
@@ -82,5 +82,5 @@ def create_app(config_name: str = None) -> Flask:
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-app.run(host='0.0.0.0', port=port, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
