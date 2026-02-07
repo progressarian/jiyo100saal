@@ -84,3 +84,13 @@ app = create_app()
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
+@app.route('/init-db-secret-2026')
+def init_database():
+    """Temporary route to initialize database"""
+    try:
+        with app.app_context():
+            db.create_all()
+        return "✅ Database initialized successfully! You can now use the app.", 200
+    except Exception as e:
+        return f"❌ Error: {str(e)}", 500
