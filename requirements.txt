@@ -21,8 +21,11 @@ python-dotenv>=1.0.0
 
 # PDF Generation (Phase 5)
 # weasyprint>=61.0
-# reportlab>=4.0.0
+# reportlab>=4.0.7
 
 # Charts (optional)
 # chart.js via CDN in templates
 gunicorn==21.2.0
+reportlab==4.0.7
+Pillow>=10.1.0
+Flask-SQLAlchemy>3.1.1
