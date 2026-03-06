@@ -5,6 +5,7 @@ Jiyo100Saal Functional Aging Assessment
 Main Flask Application
 """
 
+import utils.session
 from flask import Flask, render_template, redirect, url_for
 from config import get_config
 from models.base import db
