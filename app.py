@@ -27,7 +27,9 @@ def create_app(config_name: str = None) -> Flask:
     app.config.from_object(config)
     
     # Initialize database
-    db.init_app(config.DATABASE_URL, echo=config.SQLALCHEMY_ECHO)
+    app.config["SQLALCHEMY_DATABASE_URI"] = config.DATABASE_URL
+    app.config["SQLALCHEMY_ECHO"] = config.SQLALCHEMY_ECHO
+    db.init_app(app)
     
     # Register blueprints
     from routes.section0 import section0_bp
